@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * Implements hook_views_data_alter().
+ */
+function bhcc_events_plus_views_data_alter(array &$data) {
+  $data['node_field_data']['bhcc_localgov_facets'] = [
+    'title' => t('Event Facets'),
+    'filter' => array(
+      'label' => t('Event Facets'),
+      'field' => 'localgov_directory_facets_select',
+      'id' => 'bhcc_localgov_facets'
+    )
+  ];
+}
