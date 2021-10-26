@@ -4,6 +4,7 @@ namespace Drupal\bhcc_events_plus\Plugin\views\filter;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacets;
+use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacetsType;
 use Drupal\Core\Database\Query\Condition;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\views\Plugin\views\filter\FilterPluginBase;
@@ -58,20 +59,36 @@ class FacetFilter extends InOperator {
    */
   public function getValueOptions() {
     if (!isset($this->valueOptions)) {
-      $facets = $this->entityTypeManager
-        ->getStorage('localgov_directories_facets')
+      $facet_types = $this->entityTypeManager
+        ->getStorage('localgov_directories_facets_type')
         ->getQuery('AND')
         ->execute();
 
       $options = [];
-      foreach (LocalgovDirectoriesFacets::loadMultiple($facets) as $facet) {
-        $options[$facet->id()] = $facet->label();
+      foreach (LocalgovDirectoriesFacetsType::loadMultiple($facet_types) as $facet_type) {
+        $facets = $this->getFacetsForFacetType($facet_type->id());
+        $options[$facet_type->label()] = $facets;
+        // $options[$facet->id()] = $facet->label();
       }
 
       $this->valueOptions = $options;
     }
 
     return $this->valueOptions;
+  }
+
+  protected function getFacetsForFacetType($facet_type) {
+    $facets = $this->entityTypeManager
+      ->getStorage('localgov_directories_facets')
+      ->getQuery('AND')
+      ->condition('bundle', $facet_type )
+      ->execute();
+
+    $options = [];
+    foreach (LocalgovDirectoriesFacets::loadMultiple($facets) as $facet) {
+      $options[$facet->id()] = $facet->label();
+    }
+    return $options;
   }
 
   /**
