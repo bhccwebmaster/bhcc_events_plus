@@ -5,6 +5,8 @@ namespace Drupal\bhcc_events_plus\Plugin\views\filter;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacets;
 use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacetsType;
+use Drupal\views\Plugin\views\display\DisplayPluginBase;
+use Drupal\views\ViewExecutable;
 use Drupal\Core\Database\Query\Condition;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\views\Plugin\views\filter\FilterPluginBase;
@@ -57,24 +59,54 @@ class FacetFilter extends InOperator {
   /**
    * {@inheritdoc}
    */
+  public function init(ViewExecutable $view, DisplayPluginBase $display, array &$options = NULL) {
+    parent::init($view, $display, $options);
+    $identifier = $options['expose']['identifier'];
+
+    $exposed_input = $view->getExposedInput();
+
+    $facet_ids = [];
+    $types = $this->getFacetTypes();
+    foreach($types as $id => $type) {
+      if (!empty($exposed_input[$id])) {
+        $facet_ids = $facet_ids + $exposed_input[$id];
+      }
+    }
+    $exposed_input[$identifier] = $facet_ids;
+    $view->setExposedInput($exposed_input);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getValueOptions() {
     if (!isset($this->valueOptions)) {
-      $facet_types = $this->entityTypeManager
-        ->getStorage('localgov_directories_facets_type')
-        ->getQuery('AND')
-        ->execute();
+      $facet_types = $this->getFacetTypes();
 
       $options = [];
-      foreach (LocalgovDirectoriesFacetsType::loadMultiple($facet_types) as $facet_type) {
-        $facets = $this->getFacetsForFacetType($facet_type->id());
-        $options[$facet_type->label()] = $facets;
-        // $options[$facet->id()] = $facet->label();
+      foreach ($facet_types as $id => $label) {
+        $facets = $this->getFacetsForFacetType($id);
+        $options[$label] = $facets;
       }
 
       $this->valueOptions = $options;
     }
 
     return $this->valueOptions;
+  }
+
+  protected function getFacetTypes() {
+    $facet_types = $this->entityTypeManager
+      ->getStorage('localgov_directories_facets_type')
+      ->getQuery('AND')
+      ->execute();
+
+    $types = [];
+    foreach (LocalgovDirectoriesFacetsType::loadMultiple($facet_types) as $facet_type) {
+      $types[$facet_type->id()] = $facet_type->label();
+    }
+
+    return $types;
   }
 
   protected function getFacetsForFacetType($facet_type) {
@@ -89,6 +121,44 @@ class FacetFilter extends InOperator {
       $options[$facet->id()] = $facet->label();
     }
     return $options;
+  }
+
+  protected function valueForm(&$form, FormStateInterface $form_state) {
+    parent::valueForm($form, $form_state);
+
+    $form['bhcc_facets'] = [
+      '#type' => 'container',
+    ];
+    $types = $this->getFacetTypes();
+    foreach($types as $id => $type) {
+      if (!empty($form['value']['#options'][$type])) {
+        $form['bhcc_facets'][$id] = [
+          '#type' => 'checkboxes',
+          '#title' => $type,
+          '#options' => $form['value']['#options'][$type],
+        ];
+      }
+    }
+
+    $form['value']['#type'] = 'value';
+    unset($form['value']['#options']);
+  }
+
+  public function buildExposedForm(&$form, FormStateInterface $form_state) {
+    parent::buildExposedForm($form, $form_state);
+  }
+
+  public function validate() {
+    dpm('validate');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function valueSubmit($form, FormStateInterface $form_state) {
+    dpm('custom value submit');
+    // $form['value']['#type'] = 'select';
+    dpm(array_keys($form));
   }
 
   /**
