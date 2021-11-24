@@ -1,5 +1,8 @@
 <?php
 
+use Drupal\node\NodeInterface;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\bhcc_events_plus\EventsExtraFieldDisplay;
 /**
  * Implements hook_views_data_alter().
  */
@@ -12,4 +15,22 @@ function bhcc_events_plus_views_data_alter(array &$data) {
       'id' => 'bhcc_localgov_facets'
     )
   ];
+}
+
+/**
+ * Implements hook_entity_extra_field_info().
+ */
+function bhcc_events_plus_entity_extra_field_info() {
+  return \Drupal::service('class_resolver')
+    ->getInstanceFromDefinition(EventsExtraFieldDisplay::class)
+    ->entityExtraFieldInfo();
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_view().
+ */
+function bhcc_events_plus_node_view(array &$build, NodeInterface $node, EntityViewDisplayInterface $display, $view_mode) {
+  return \Drupal::service('class_resolver')
+    ->getInstanceFromDefinition(EventsExtraFieldDisplay::class)
+    ->nodeView($build, $node, $display, $view_mode);
 }

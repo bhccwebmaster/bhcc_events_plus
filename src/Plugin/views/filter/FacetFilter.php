@@ -61,19 +61,25 @@ class FacetFilter extends InOperator {
    */
   public function init(ViewExecutable $view, DisplayPluginBase $display, array &$options = NULL) {
     parent::init($view, $display, $options);
-    $identifier = $options['expose']['identifier'];
 
-    $exposed_input = $view->getExposedInput();
+    // Modifiy the filter if exposed input.
+    if (!empty($options['expose'])) {
+      $identifier = $options['expose']['identifier'];
 
-    $facet_ids = [];
-    $types = $this->getFacetTypes();
-    foreach($types as $id => $type) {
-      if (!empty($exposed_input[$id])) {
-        $facet_ids = $facet_ids + $exposed_input[$id];
+      $exposed_input = $view->getExposedInput();
+
+      // Reset exposed input to the main filter.
+      // @TODO this should really be in massageFormValues()
+      $facet_ids = [];
+      $types = $this->getFacetTypes();
+      foreach($types as $id => $type) {
+        if (!empty($exposed_input['facet_' . $id])) {
+          $facet_ids = $facet_ids + $exposed_input['facet_' . $id];
+        }
       }
+      $exposed_input[$identifier] = $facet_ids;
+      $view->setExposedInput($exposed_input);
     }
-    $exposed_input[$identifier] = $facet_ids;
-    $view->setExposedInput($exposed_input);
   }
 
   /**
@@ -109,7 +115,14 @@ class FacetFilter extends InOperator {
     return $types;
   }
 
-  protected function getFacetsForFacetType($facet_type) {
+  /**
+   * Get facets for facet type
+   * @param  string $facet_type
+   *   Facet machine name.
+   * @return array
+   *   Facet options in format [id => label];
+   */
+  protected function getFacetsForFacetType($facet_type): array {
     $facets = $this->entityTypeManager
       ->getStorage('localgov_directories_facets')
       ->getQuery('AND')
@@ -123,16 +136,20 @@ class FacetFilter extends InOperator {
     return $options;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function valueForm(&$form, FormStateInterface $form_state) {
     parent::valueForm($form, $form_state);
 
     $form['bhcc_facets'] = [
       '#type' => 'container',
+      '#weight' => 99,
     ];
     $types = $this->getFacetTypes();
     foreach($types as $id => $type) {
       if (!empty($form['value']['#options'][$type])) {
-        $form['bhcc_facets'][$id] = [
+        $form['bhcc_facets']['facet_' . $id] = [
           '#type' => 'checkboxes',
           '#title' => $type,
           '#options' => $form['value']['#options'][$type],
@@ -142,23 +159,6 @@ class FacetFilter extends InOperator {
 
     $form['value']['#type'] = 'value';
     unset($form['value']['#options']);
-  }
-
-  public function buildExposedForm(&$form, FormStateInterface $form_state) {
-    parent::buildExposedForm($form, $form_state);
-  }
-
-  public function validate() {
-    dpm('validate');
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function valueSubmit($form, FormStateInterface $form_state) {
-    dpm('custom value submit');
-    // $form['value']['#type'] = 'select';
-    dpm(array_keys($form));
   }
 
   /**
