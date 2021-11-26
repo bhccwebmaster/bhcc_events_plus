@@ -143,8 +143,9 @@ class FacetFilter extends InOperator {
     parent::valueForm($form, $form_state);
 
     $form['bhcc_facets'] = [
-      '#type' => 'container',
       '#weight' => 99,
+      '#theme' => 'bhcc_events_facets',
+      '#type' => 'container',
     ];
     $types = $this->getFacetTypes();
     foreach($types as $id => $type) {

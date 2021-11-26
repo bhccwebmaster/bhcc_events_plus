@@ -3,6 +3,18 @@
 use Drupal\node\NodeInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\bhcc_events_plus\EventsExtraFieldDisplay;
+
+/**
+ * Implements hook_theme().
+ */
+function bhcc_events_plus_theme() {
+  return [
+    'bhcc_events_facets' => [
+      'render element' => 'elements',
+    ],
+  ];
+}
+
 /**
  * Implements hook_views_data_alter().
  */

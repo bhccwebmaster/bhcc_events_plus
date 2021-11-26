@@ -1,0 +1,15 @@
+<ul>
+{% for key, facet in elements if key|first != '#' %}
+  {# {{ facet }} #}
+  <li>
+    <fieldset>
+      <legend>{{ facet['#title'] }}</legend>
+      <ul>
+        {% for item_key, item in facet if item_key|first != '#' %}
+          <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </fieldset>
+  </li>
+{% endfor %}
+</ul>
