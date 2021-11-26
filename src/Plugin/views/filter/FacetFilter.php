@@ -146,6 +146,9 @@ class FacetFilter extends InOperator {
       '#weight' => 99,
       '#theme' => 'bhcc_events_facets',
       '#type' => 'container',
+      '#attributes' => [
+        'class' => ['facet-filter'],
+      ],
     ];
     $types = $this->getFacetTypes();
     foreach($types as $id => $type) {
