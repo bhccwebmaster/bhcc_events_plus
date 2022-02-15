@@ -1,8 +1,11 @@
 <?php
 
 use Drupal\node\NodeInterface;
+use Drupal\node\Entity\Node;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\bhcc_events_plus\EventsExtraFieldDisplay;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\pathauto\Entity\PathautoPattern;
 
 /**
@@ -71,4 +74,140 @@ function bhcc_events_plus_pathauto_pattern_alter(PathautoPattern $pattern, array
       }
     }
   }
+}
+
+/**
+ * Implements hook_module_implements_alter
+ */
+function bhcc_events_plus_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'form_views_exposed_form_alter') {
+    // Move bhcc events plus to last hook
+    unset($implementations['bhcc_events_plus']);
+    $implementations['bhcc_events_plus'] = NULL;
+  }
+}
+
+/**
+ * Implements hook_form_views_exposed_form_alter().
+ */
+function bhcc_events_plus_form_views_exposed_form_alter(&$form, FormStateInterface $form_state) {
+
+  // Modifiying the views exposed filter form.
+  // Required to use an after build as 
+  // localgov_events needs to add the date picker.
+  if ($form['#id'] == 'views-exposed-form-localgov-events-listing-page-all-events') {
+    $form['#after_build'][] = '_bhcc_events_plus_localgov_events_listing_after_build';
+  }
+}
+
+function _bhcc_events_plus_localgov_events_listing_after_build($form, FormStateInterface &$form_state) {
+
+  // Remove the taxonomy term field (it gets replaced by facets).
+  // unset($form['tid']);
+  //
+  // // Disable auto complete on the date fields.
+  // $form['start_date']['#attributes']['autocomplete'] = 'off';
+  // $form['end_date']['#attributes']['autocomplete'] = 'off';
+
+  // If this is an events node, and it has a channel,
+  // direct the search to search in channel.
+  $route_match = \Drupal::routeMatch();
+  if ($route_match->getParameters()->has('node') && $node = $route_match->getParameter('node')) {
+    if (!$node instanceof NodeInterface) {
+      $node = Node::load((int) $node);
+    }
+
+    // Set a default value of NULL for the channel node.
+    $channel_node = NULL;
+
+    // Channel node.
+    if ($node->bundle() == 'event_channel') {
+      $form['#action'] = $node->toUrl()->toString();
+      $channel_node = $node;
+    }
+
+    // Event node.
+    if ($node->hasField('bhcc_event_channel') && $target_id = $node->bhcc_event_channel->target_id) {
+      $channel_node = Node::load($target_id);
+      if ($channel_node instanceof NodeInterface) {
+        $form['#action'] = $channel_node->toUrl()->toString();
+      }
+    }
+
+    // Filter facets.
+    if ($channel_node instanceof NodeInterface && !empty($form['bhcc_facets'])) {
+
+      // Get the facet types that are enabled.
+      $facet_types = $channel_node->get('localgov_directory_facets_enable')->getValue();
+
+      // If facets found, filter out unrequired facets here.
+      if (!empty($facet_types[0]['target_id'])) {
+        $facet_types = array_column($facet_types, 'target_id');
+        $form['bhcc_facets'] = array_filter($form['bhcc_facets'], function($key) use($facet_types) {
+
+          // Don't filter special keys.
+          if (substr($key, 0, 1) == '#') {
+            return TRUE;
+          }
+
+          // Check if is in facet array.
+          return in_array(substr($key, 6), $facet_types) ? TRUE : FALSE;
+        }, ARRAY_FILTER_USE_KEY);
+      } else {
+        // Remove all facets if none set.
+        unset($form['bhcc_facets']);
+      }
+    } else {
+      // Remove facets if not a channel node.
+      unset($form['bhcc_facets']);
+    }
+  } else {
+    // Remove facets if no channel node.
+    unset($form['bhcc_facets']);
+  }
+
+  // Seperate the filters in own container.
+  $form['bhcc_exposed_filters'] = [
+    '#type' => 'container',
+    '#weight' => 0,
+    // @todo change to theme so can be controlled with cusotm twig.
+    '#attributes' => [
+      'class' => ['card', 'default-shadow'],
+    ],
+  ];
+
+  $preserved_keys = [
+    'form_build_id',
+    'form_id',
+    'form_token',
+    'bhcc_exposed_filters',
+    'bhcc_facets',
+  ];
+
+  $form_elements = array_keys($form);
+  foreach($form_elements as $key) {
+    if (strpos($key, '#') !== 0 && !in_array($key, $preserved_keys)) {
+      $form['bhcc_exposed_filters'][$key] = $form[$key];
+      unset($form[$key]);
+    }
+  }
+
+  // Set the title and description from form info.
+  // This gets removed when in a container.
+  foreach($form['#info'] as $info_key => $form_info) {
+    $filter_key = $form_info['value'];
+    if (!empty($form['bhcc_exposed_filters'][$filter_key])) {
+      $form['bhcc_exposed_filters'][$filter_key]['#title'] = $form_info['label'];
+      $form['bhcc_exposed_filters'][$filter_key]['#description'] = $form_info['description'];
+    }
+  }
+
+  // Add the autosubmit js.
+  $form['#attached']['library'][] = 'bhcc_event/facet_auto_submit';
+
+  // Alter the exposed form for events facets.
+  // Uncomment below to enable facets on events.
+  // module_load_include('inc', 'bhcc_event', 'bhcc_event.events_exposed_form_support');
+  // _bhcc_event_events_views_exposed_form_alter($form, $form_state);
+  return $form;
 }
