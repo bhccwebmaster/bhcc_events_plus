@@ -3,6 +3,7 @@
 use Drupal\node\NodeInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\bhcc_events_plus\EventsExtraFieldDisplay;
+use Drupal\pathauto\Entity\PathautoPattern;
 
 /**
  * Implements hook_theme().
@@ -45,4 +46,29 @@ function bhcc_events_plus_node_view(array &$build, NodeInterface $node, EntityVi
   return \Drupal::service('class_resolver')
     ->getInstanceFromDefinition(EventsExtraFieldDisplay::class)
     ->nodeView($build, $node, $display, $view_mode);
+}
+
+/**
+ * Implements hook_pathauto_pattern_alter().
+ */
+function bhcc_events_plus_pathauto_pattern_alter(PathautoPattern $pattern, array $context) {
+
+  $entity = reset($context['data']);
+  if ($entity instanceof NodeInterface) {
+
+    // Due to events not always having a channel,
+    // add the pattern for indivudual events here to be aliased with
+    // their parent event channel.
+    // Based on Localgov Services Navigation path alter.
+    // @see LocalgovDrupal services navigation module.
+    if ($entity->bundle() === 'localgov_event' && $entity->hasField('bhcc_event_channel') && !empty($target_id = $entity->get('bhcc_event_channel')->target_id) && strpos($pattern->getPattern(), '[node:bhcc_event_channel:0:entity:url:relative]') === FALSE) {
+      
+      // Only set the path if the channel node exists.
+      // This is to avoid events using the /[node:title] pattern.
+      $channel_nids = \Drupal::entityTypeManager()->getStorage('node')->getQuery()->condition('nid', $target_id)->execute();
+      if (!empty($channel_nids)) {
+        $pattern->setPattern('[node:bhcc_event_channel:0:entity:url:relative]/[node:title]');
+      }
+    }
+  }
 }
