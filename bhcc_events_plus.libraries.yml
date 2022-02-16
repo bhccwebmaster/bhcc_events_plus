@@ -1,0 +1,7 @@
+facet_auto_submit:
+  version: VERSION
+  js:
+    js/facet_auto_submit.js: {}
+  dependencies:
+    - core/drupal
+    - core/jquery

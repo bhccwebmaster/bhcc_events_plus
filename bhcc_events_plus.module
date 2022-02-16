@@ -203,7 +203,7 @@ function _bhcc_events_plus_localgov_events_listing_after_build($form, FormStateI
   }
 
   // Add the autosubmit js.
-  $form['#attached']['library'][] = 'bhcc_event/facet_auto_submit';
+  $form['#attached']['library'][] = 'bhcc_events_plus/facet_auto_submit';
 
   // Alter the exposed form for events facets.
   // Uncomment below to enable facets on events.
