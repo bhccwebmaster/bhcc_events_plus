@@ -16,6 +16,11 @@ function bhcc_events_plus_theme() {
     'bhcc_events_facets' => [
       'render element' => 'elements',
     ],
+    'date_recur_next_date' => [
+      'variables' => [
+        'date' => []
+      ]
+    ],
   ];
 }
 
