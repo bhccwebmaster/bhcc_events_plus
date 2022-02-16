@@ -225,6 +225,19 @@ function _bhcc_events_plus_localgov_events_listing_after_build($form, FormStateI
       $form['bhcc_exposed_filters']['search']['#weight'] = -50;
     }
   }
+
+  // Fix hide the reset button if no filters selected (incl facets).
+  $view = $form_state->get('view');
+  $exposed_input = $view->getExposedInput();
+  if (empty($exposed_input['bhcc_localgov_facets'])) {
+    unset($exposed_input['bhcc_localgov_facets']);
+  }
+  if (!empty($exposed_input['start']) && $exposed_input['start'] == date('Y-m-d')) {
+    unset($exposed_input['start']);
+  }
+  if (empty($exposed_input)) {
+    unset($form['bhcc_exposed_filters']['actions']['reset']);
+  }
   
   return $form;
 }
