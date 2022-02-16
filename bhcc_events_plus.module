@@ -82,6 +82,25 @@ function bhcc_events_plus_pathauto_pattern_alter(PathautoPattern $pattern, array
 }
 
 /**
+ * Implements hook_node_presave().
+ */
+function bhcc_events_plus_node_presave(NodeInterface $node) {
+  if ($node->bundle() === 'localgov_event') {
+
+    // If the no date field has a value, set a forever date.
+    // This is so event date views still work.
+    if ($node->hasField('bhcc_event_no_date') && ($node->bhcc_event_no_date->value)) {
+      $date_arr = [
+        'value' => date('Y-m-d\TH:i:s', strtotime('2000-01-01 0:00:00')),
+        'end_value' => date('Y-m-d\TH:i:s', strtotime('2099-12-31 23:59:59')),
+        'timezone' => 'Europe/London',
+      ];
+      $node->set('localgov_event_date', $date_arr);
+    }
+  }
+}
+
+/**
  * Implements hook_module_implements_alter
  */
 function bhcc_events_plus_module_implements_alter(&$implementations, $hook) {
