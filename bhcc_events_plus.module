@@ -80,10 +80,40 @@ function bhcc_events_plus_pathauto_pattern_alter(PathautoPattern $pattern, array
  * Implements hook_module_implements_alter
  */
 function bhcc_events_plus_module_implements_alter(&$implementations, $hook) {
-  if ($hook == 'form_views_exposed_form_alter') {
+  if ($hook == 'form_alter' || $hook == 'form_views_exposed_form_alter') {
     // Move bhcc events plus to last hook
     unset($implementations['bhcc_events_plus']);
     $implementations['bhcc_events_plus'] = NULL;
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function bhcc_events_plus_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+
+  if (in_array($form_id, ['node_localgov_event_form', 'node_localgov_event_edit_form'])) {
+
+    // Add end venue checkbox
+    $end_venue_element = $form['bhcc_end_venue']['widget'][0]['target_id'];
+    $end_venue_has_value = (!empty($end_venue_element['#value']) || !empty($end_venue_element['#default_value']) ? TRUE : FALSE);
+    $form['end_venue_checkbox'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Add a seperate end venue'),
+      '#default_value' => $end_venue_has_value,
+    ];
+
+    $end_form = [
+      '#prefix' => '<div class="js-bhcc-event-end">',
+      '#suffix' => '</div>',
+      '#states' => [
+        'visible' => [
+          ':input[name="end_venue_checkbox"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
+    $form['bhcc_end_venue'] += $end_form;
   }
 }
 
