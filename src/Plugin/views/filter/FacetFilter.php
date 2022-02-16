@@ -67,7 +67,7 @@ class FacetFilter extends InOperator {
       $identifier = $options['expose']['identifier'];
 
       $exposed_input = $view->getExposedInput();
-
+      
       // Reset exposed input to the main filter.
       // @TODO this should really be in massageFormValues()
       $facet_ids = [];

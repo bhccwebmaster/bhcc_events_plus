@@ -102,13 +102,6 @@ function bhcc_events_plus_form_views_exposed_form_alter(&$form, FormStateInterfa
 
 function _bhcc_events_plus_localgov_events_listing_after_build($form, FormStateInterface &$form_state) {
 
-  // Remove the taxonomy term field (it gets replaced by facets).
-  // unset($form['tid']);
-  //
-  // // Disable auto complete on the date fields.
-  // $form['start_date']['#attributes']['autocomplete'] = 'off';
-  // $form['end_date']['#attributes']['autocomplete'] = 'off';
-
   // If this is an events node, and it has a channel,
   // direct the search to search in channel.
   $route_match = \Drupal::routeMatch();
@@ -205,9 +198,33 @@ function _bhcc_events_plus_localgov_events_listing_after_build($form, FormStateI
   // Add the autosubmit js.
   $form['#attached']['library'][] = 'bhcc_events_plus/facet_auto_submit';
 
-  // Alter the exposed form for events facets.
-  // Uncomment below to enable facets on events.
-  // module_load_include('inc', 'bhcc_event', 'bhcc_event.events_exposed_form_support');
-  // _bhcc_event_events_views_exposed_form_alter($form, $form_state);
+  // If proximity filter exists.
+  if (!empty($form['bhcc_exposed_filters']['proximity_wrapper']['proximity'])) {
+
+    $form['bhcc_exposed_filters']['proximity'] = $form['bhcc_exposed_filters']['proximity_wrapper']['proximity'];
+    $title = $form['bhcc_exposed_filters']['proximity_wrapper']['#title'];
+    unset($form['bhcc_exposed_filters']['proximity_wrapper']);
+
+    // Set as a container, not a fieldset.
+    $form['bhcc_exposed_filters']['proximity']['#type'] = 'container';
+
+    // Hide the distance filter.
+    // Should be ok to unset completley as assumed by view if not present.
+    unset($form['bhcc_exposed_filters']['proximity']['value']);
+
+    // Remove the description and summary.
+    unset($form['bhcc_exposed_filters']['proximity']['source_configuration']['origin_address']['#description']);
+    unset($form['bhcc_exposed_filters']['proximity']['exposed_summary']);
+
+    // Change the field title to the set title in views.
+    $form['bhcc_exposed_filters']['proximity']['source_configuration']['origin_address']['#title'] = $title;
+
+    // Set the weights.
+    $form['bhcc_exposed_filters']['proximity']['#weight'] = -40;
+    if (!empty($form['bhcc_exposed_filters']['search'])) {
+      $form['bhcc_exposed_filters']['search']['#weight'] = -50;
+    }
+  }
+  
   return $form;
 }
