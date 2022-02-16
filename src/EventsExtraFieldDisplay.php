@@ -114,10 +114,28 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
    */
   public function entityExtraFieldInfo() {
     $fields = [];
+
+    // Event channel view display.
     $fields['node']['event_channel']['display']['bhcc_events_view'] = [
       'label' => $this->t('Events listing'),
       'description' => $this->t("Output from the embedded view for this channel."),
       'weight' => -20,
+      'visible' => TRUE,
+    ];
+
+    // Add banner for event in the past.
+    $fields['node']['localgov_event']['display']['bhcc_event_past_banner'] = [
+      'label' => t('Event past banner'),
+      'description' => t('Banner to display if the event is in the past.'),
+      'weight' => 100,
+      'visible' => TRUE,
+    ];
+
+    // Add end event checkbox on event edit form.
+    $fields['node']['localgov_event']['form']['end_venue_checkbox'] = [
+      'label' => t('Add end venue checkbox'),
+      'description' => t('Add a checkbox to add an end event.'),
+      'weight' => 100,
       'visible' => TRUE,
     ];
 
@@ -130,8 +148,32 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
    * @see localgov_directories_node_view()
    */
   public function nodeView(array &$build, NodeInterface $node, EntityViewDisplayInterface $display, $view_mode) {
+    
+    // Display the events channel view.
     if ($display->getComponent('bhcc_events_view')) {
       $build['bhcc_events_view'] = $this->getViewEmbed($node);
+    }
+
+    // Display the empty banner if event is in the past.
+    if ($display->getComponent('bhcc_event_past_banner')) {
+
+      // Get the event field.
+      if ($node->getType() == 'localgov_event' && $node->hasField('localgov_event_date')) {
+        if ($date_field = $node->get('localgov_event_date')->first()) {
+          $date_bhcc_helper = $date_field->getHelper();
+
+          // If the last occurance of the event is in the past, then show the banner.
+          if (empty($date_bhcc_helper->getOccurrences(new \DateTime(), NULL, 5))) {
+            $markup  = '<p class="bhcc-event-alert status-message status-message--info" aria-role="alert">';
+            $markup .= t('This event occured in the past.');
+            $markup .= '</p>';
+            $build['bhcc_event_past_banner'] = [
+              '#type' => 'markup',
+              '#markup' => $markup,
+            ];
+          }
+        }
+      }
     }
   }
 
