@@ -19,6 +19,7 @@ use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacets;
 use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacetsType;
 use Drupal\node\NodeInterface;
 use Drupal\views\Views;
+use Drupal\localgov_geo\Entity\LocalgovGeo;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -131,6 +132,14 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
       'visible' => TRUE,
     ];
 
+    // Add banner for event in the past.
+    $fields['node']['localgov_event']['display']['bhcc_event_geo_address'] = [
+      'label' => t('Event geo address'),
+      'description' => t('The address from a geo entity.'),
+      'weight' => 0,
+      'visible' => TRUE,
+    ];
+
     // Add end event checkbox on event edit form.
     $fields['node']['localgov_event']['form']['end_venue_checkbox'] = [
       'label' => t('Add end venue checkbox'),
@@ -173,6 +182,14 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
             ];
           }
         }
+      }
+    }
+
+    if ($display->getComponent('bhcc_event_geo_address')) {
+      if ($node->hasField('localgov_event_location') && $geo_id = $node->localgov_event_location->target_id) {
+        $geo = $this->entityTypeManager->getStorage('localgov_geo')->load($geo_id);
+        $view = $this->entityTypeManager->getViewBuilder('localgov_geo')->view($geo, 'display_address');
+        $build['bhcc_event_geo_address'] = $view;
       }
     }
   }
