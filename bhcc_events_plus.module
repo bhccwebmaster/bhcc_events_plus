@@ -280,6 +280,11 @@ function _bhcc_events_plus_localgov_events_listing_after_build($form, FormStateI
     }
   }
 
+  // Move the cost filter to the bottom
+  if (!empty($form['bhcc_exposed_filters']['bhcc_cost_value'])) {
+    $form['bhcc_exposed_filters']['bhcc_cost_value']['#weight'] = 100;
+  }
+
   // Fix hide the reset button if no filters selected (incl facets).
   $view = $form_state->get('view');
   $exposed_input = $view->getExposedInput();
