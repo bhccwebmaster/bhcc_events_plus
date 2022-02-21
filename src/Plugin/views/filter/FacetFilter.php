@@ -7,14 +7,12 @@ use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacets;
 use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacetsType;
 use Drupal\views\Plugin\views\display\DisplayPluginBase;
 use Drupal\views\ViewExecutable;
-use Drupal\Core\Database\Query\Condition;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\views\Plugin\views\filter\FilterPluginBase;
 use Drupal\views\Plugin\views\filter\InOperator;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class FacetFilter
+ * Class Events facet filter.
  *
  * @package Drupal\bhcc_events_plus\views\filter
  *
@@ -23,7 +21,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class FacetFilter extends InOperator {
 
   /**
-   * @var EntityTypeManagerInterface
+   * Entity type manage service.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
 
@@ -32,14 +32,14 @@ class FacetFilter extends InOperator {
    *
    * @param array $configuration
    *   Configuration.
-   * @param $plugin_id
+   * @param string $plugin_id
    *   Plugin ID.
-   * @param $plugin_definition
+   * @param array $plugin_definition
    *   Plugin definition.
    * @param Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   Entity Type Manager service.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(array $configuration, string $plugin_id, array $plugin_definition, EntityTypeManagerInterface $entity_type_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->entityTypeManager = $entity_type_manager;
   }
@@ -67,12 +67,12 @@ class FacetFilter extends InOperator {
       $identifier = $options['expose']['identifier'];
 
       $exposed_input = $view->getExposedInput();
-      
+
       // Reset exposed input to the main filter.
-      // @TODO this should really be in massageFormValues()
+      // @todo this should really be in massageFormValues()
       $facet_ids = [];
       $types = $this->getFacetTypes();
-      foreach($types as $id => $type) {
+      foreach ($types as $id => $type) {
         if (!empty($exposed_input['facet_' . $id])) {
           $facet_ids = $facet_ids + $exposed_input['facet_' . $id];
         }
@@ -101,6 +101,9 @@ class FacetFilter extends InOperator {
     return $this->valueOptions;
   }
 
+  /**
+   * Get facets types that are avalible.
+   */
   protected function getFacetTypes() {
     $facet_types = $this->entityTypeManager
       ->getStorage('localgov_directories_facets_type')
@@ -116,9 +119,11 @@ class FacetFilter extends InOperator {
   }
 
   /**
-   * Get facets for facet type
-   * @param  string $facet_type
+   * Get facets for facet type.
+   *
+   * @param string $facet_type
    *   Facet machine name.
+   *
    * @return array
    *   Facet options in format [id => label];
    */
@@ -126,7 +131,7 @@ class FacetFilter extends InOperator {
     $facets = $this->entityTypeManager
       ->getStorage('localgov_directories_facets')
       ->getQuery('AND')
-      ->condition('bundle', $facet_type )
+      ->condition('bundle', $facet_type)
       ->execute();
 
     $options = [];
@@ -151,7 +156,7 @@ class FacetFilter extends InOperator {
       ],
     ];
     $types = $this->getFacetTypes();
-    foreach($types as $id => $type) {
+    foreach ($types as $id => $type) {
       if (!empty($form['value']['#options'][$type])) {
         $form['bhcc_facets']['facet_' . $id] = [
           '#type' => 'checkboxes',
@@ -173,4 +178,5 @@ class FacetFilter extends InOperator {
     $this->query->addField('node__localgov_directory_facets_select', 'localgov_directory_facets_select_target_id');
     $this->query->addWhere(0, 'node__localgov_directory_facets_select.localgov_directory_facets_select_target_id', $this->value, 'IN');
   }
+
 }

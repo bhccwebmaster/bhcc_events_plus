@@ -1,9 +1,13 @@
 <?php
 
+/**
+ * @file
+ * Contains bhcc_events_plus module file.
+ */
+
 use Drupal\node\NodeInterface;
 use Drupal\node\Entity\Node;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
-use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\bhcc_events_plus\EventsExtraFieldDisplay;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\pathauto\Entity\PathautoPattern;
@@ -18,8 +22,8 @@ function bhcc_events_plus_theme() {
     ],
     'date_recur_next_date' => [
       'variables' => [
-        'date' => []
-      ]
+        'date' => [],
+      ],
     ],
   ];
 }
@@ -30,11 +34,11 @@ function bhcc_events_plus_theme() {
 function bhcc_events_plus_views_data_alter(array &$data) {
   $data['node_field_data']['bhcc_localgov_facets'] = [
     'title' => t('Event Facets'),
-    'filter' => array(
+    'filter' => [
       'label' => t('Event Facets'),
       'field' => 'localgov_directory_facets_select',
-      'id' => 'bhcc_localgov_facets'
-    )
+      'id' => 'bhcc_localgov_facets',
+    ],
   ];
 }
 
@@ -70,7 +74,7 @@ function bhcc_events_plus_pathauto_pattern_alter(PathautoPattern $pattern, array
     // Based on Localgov Services Navigation path alter.
     // @see LocalgovDrupal services navigation module.
     if ($entity->bundle() === 'localgov_event' && $entity->hasField('bhcc_event_channel') && !empty($target_id = $entity->get('bhcc_event_channel')->target_id) && strpos($pattern->getPattern(), '[node:bhcc_event_channel:0:entity:url:relative]') === FALSE) {
-      
+
       // Only set the path if the channel node exists.
       // This is to avoid events using the /[node:title] pattern.
       $channel_nids = \Drupal::entityTypeManager()->getStorage('node')->getQuery()->condition('nid', $target_id)->execute();
@@ -101,11 +105,11 @@ function bhcc_events_plus_node_presave(NodeInterface $node) {
 }
 
 /**
- * Implements hook_module_implements_alter
+ * Implements hook_module_implements_alter().
  */
 function bhcc_events_plus_module_implements_alter(&$implementations, $hook) {
   if ($hook == 'form_alter' || $hook == 'form_views_exposed_form_alter') {
-    // Move bhcc events plus to last hook
+    // Move bhcc events plus to last hook.
     unset($implementations['bhcc_events_plus']);
     $implementations['bhcc_events_plus'] = NULL;
   }
@@ -116,9 +120,10 @@ function bhcc_events_plus_module_implements_alter(&$implementations, $hook) {
  */
 function bhcc_events_plus_form_alter(&$form, FormStateInterface $form_state, $form_id) {
 
-  if (in_array($form_id, ['node_localgov_event_form', 'node_localgov_event_edit_form'])) {
+  $form_ids = ['node_localgov_event_form', 'node_localgov_event_edit_form'];
+  if (in_array($form_id, $form_ids)) {
 
-    // Add end venue checkbox
+    // Add end venue checkbox.
     $end_venue_element = $form['bhcc_end_venue']['widget'][0]['target_id'];
     $end_venue_has_value = (!empty($end_venue_element['#value']) || !empty($end_venue_element['#default_value']) ? TRUE : FALSE);
     $form['end_venue_checkbox'] = [
@@ -147,14 +152,27 @@ function bhcc_events_plus_form_alter(&$form, FormStateInterface $form_state, $fo
 function bhcc_events_plus_form_views_exposed_form_alter(&$form, FormStateInterface $form_state) {
 
   // Modifiying the views exposed filter form.
-  // Required to use an after build as 
+  // Required to use an after build as
   // localgov_events needs to add the date picker.
   if ($form['#id'] == 'views-exposed-form-localgov-events-listing-page-all-events') {
     $form['#after_build'][] = '_bhcc_events_plus_localgov_events_listing_after_build';
   }
 }
 
-function _bhcc_events_plus_localgov_events_listing_after_build($form, FormStateInterface &$form_state) {
+/**
+ * Custom afterbuild to set up the event exposed form.
+ *
+ * Occurs after localgov_events modifications.
+ *
+ * @param array $form
+ *   Form array.
+ * @param Drupal\Core\Form\FormStateInterface $form_state
+ *   Forms state.
+ *
+ * @return array
+ *   Modified form array.
+ */
+function _bhcc_events_plus_localgov_events_listing_after_build(array $form, FormStateInterface &$form_state) {
 
   // If this is an events node, and it has a channel,
   // direct the search to search in channel.
@@ -190,7 +208,7 @@ function _bhcc_events_plus_localgov_events_listing_after_build($form, FormStateI
       // If facets found, filter out unrequired facets here.
       if (!empty($facet_types[0]['target_id'])) {
         $facet_types = array_column($facet_types, 'target_id');
-        $form['bhcc_facets'] = array_filter($form['bhcc_facets'], function($key) use($facet_types) {
+        $form['bhcc_facets'] = array_filter($form['bhcc_facets'], function ($key) use ($facet_types) {
 
           // Don't filter special keys.
           if (substr($key, 0, 1) == '#') {
@@ -200,15 +218,18 @@ function _bhcc_events_plus_localgov_events_listing_after_build($form, FormStateI
           // Check if is in facet array.
           return in_array(substr($key, 6), $facet_types) ? TRUE : FALSE;
         }, ARRAY_FILTER_USE_KEY);
-      } else {
+      }
+      else {
         // Remove all facets if none set.
         unset($form['bhcc_facets']);
       }
-    } else {
+    }
+    else {
       // Remove facets if not a channel node.
       unset($form['bhcc_facets']);
     }
-  } else {
+  }
+  else {
     // Remove facets if no channel node.
     unset($form['bhcc_facets']);
   }
@@ -232,7 +253,7 @@ function _bhcc_events_plus_localgov_events_listing_after_build($form, FormStateI
   ];
 
   $form_elements = array_keys($form);
-  foreach($form_elements as $key) {
+  foreach ($form_elements as $key) {
     if (strpos($key, '#') !== 0 && !in_array($key, $preserved_keys)) {
       $form['bhcc_exposed_filters'][$key] = $form[$key];
       unset($form[$key]);
@@ -241,7 +262,7 @@ function _bhcc_events_plus_localgov_events_listing_after_build($form, FormStateI
 
   // Set the title and description from form info.
   // This gets removed when in a container.
-  foreach($form['#info'] as $info_key => $form_info) {
+  foreach ($form['#info'] as $form_info) {
     $filter_key = $form_info['value'];
     if (!empty($form['bhcc_exposed_filters'][$filter_key])) {
       $form['bhcc_exposed_filters'][$filter_key]['#title'] = $form_info['label'];
@@ -280,7 +301,7 @@ function _bhcc_events_plus_localgov_events_listing_after_build($form, FormStateI
     }
   }
 
-  // Move the cost filter to the bottom
+  // Move the cost filter to the bottom.
   if (!empty($form['bhcc_exposed_filters']['bhcc_cost_value'])) {
     $form['bhcc_exposed_filters']['bhcc_cost_value']['#weight'] = 100;
   }
@@ -297,6 +318,6 @@ function _bhcc_events_plus_localgov_events_listing_after_build($form, FormStateI
   if (empty($exposed_input)) {
     unset($form['bhcc_exposed_filters']['actions']['reset']);
   }
-  
+
   return $form;
 }

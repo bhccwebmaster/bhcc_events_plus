@@ -2,7 +2,6 @@
 
 namespace Drupal\bhcc_events_plus;
 
-use Drupal\Component\Utility\Html;
 use Drupal\Core\Block\BlockManagerInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
@@ -10,16 +9,10 @@ use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBuilderInterface;
-use Drupal\Core\Form\FormState;
-use Drupal\Core\Plugin\PluginBase;
-use Drupal\Core\Render\Markup;
 use Drupal\Core\Security\TrustedCallbackInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacets;
-use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacetsType;
 use Drupal\node\NodeInterface;
 use Drupal\views\Views;
-use Drupal\localgov_geo\Entity\LocalgovGeo;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -126,24 +119,24 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
 
     // Add banner for event in the past.
     $fields['node']['localgov_event']['display']['bhcc_event_past_banner'] = [
-      'label' => t('Event past banner'),
-      'description' => t('Banner to display if the event is in the past.'),
+      'label' => $this->t('Event past banner'),
+      'description' => $this->t('Banner to display if the event is in the past.'),
       'weight' => 100,
       'visible' => TRUE,
     ];
 
     // Add banner for event in the past.
     $fields['node']['localgov_event']['display']['bhcc_event_geo_address'] = [
-      'label' => t('Event geo address'),
-      'description' => t('The address from a geo entity.'),
+      'label' => $this->t('Event geo address'),
+      'description' => $this->t('The address from a geo entity.'),
       'weight' => 0,
       'visible' => TRUE,
     ];
 
     // Add end event checkbox on event edit form.
     $fields['node']['localgov_event']['form']['end_venue_checkbox'] = [
-      'label' => t('Add end venue checkbox'),
-      'description' => t('Add a checkbox to add an end event.'),
+      'label' => $this->t('Add end venue checkbox'),
+      'description' => $this->t('Add a checkbox to add an end event.'),
       'weight' => 100,
       'visible' => TRUE,
     ];
@@ -157,7 +150,7 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
    * @see localgov_directories_node_view()
    */
   public function nodeView(array &$build, NodeInterface $node, EntityViewDisplayInterface $display, $view_mode) {
-    
+
     // Display the events channel view.
     if ($display->getComponent('bhcc_events_view')) {
       $build['bhcc_events_view'] = $this->getViewEmbed($node);
@@ -171,10 +164,11 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
         if ($date_field = $node->get('localgov_event_date')->first()) {
           $date_bhcc_helper = $date_field->getHelper();
 
-          // If the last occurance of the event is in the past, then show the banner.
+          // If the last occurance of the event is in the past,
+          // then show the banner.
           if (empty($date_bhcc_helper->getOccurrences(new \DateTime(), NULL, 5))) {
-            $markup  = '<p class="bhcc-event-alert status-message status-message--info" aria-role="alert">';
-            $markup .= t('This event occured in the past.');
+            $markup = '<p class="bhcc-event-alert status-message status-message--info" aria-role="alert">';
+            $markup .= $this->t('This event occured in the past.');
             $markup .= '</p>';
             $build['bhcc_event_past_banner'] = [
               '#type' => 'markup',

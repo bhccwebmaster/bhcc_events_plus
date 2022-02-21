@@ -4,7 +4,6 @@ namespace Drupal\bhcc_events_plus\Plugin\Field\FieldWidget;
 
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Field\Plugin\Field\FieldWidget\OptionsWidgetBase;
 use Drupal\localgov_directories\Plugin\Field\FieldWidget\ChannelFieldWidget as DirectoryChannelFieldWidget;
 
 /**
@@ -28,7 +27,12 @@ class ChannelFieldWidget extends DirectoryChannelFieldWidget {
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
     $element = parent::formElement($items, $delta, $element, $form, $form_state);
 
-    $primary_options = $secondary_options = $this->getOptions($items->getEntity());
+    // @see localgov_directories channel widget.
+    // Don't think we need the primary options here?
+    // It should get filtered by the key in the foreach below.
+    // Comment out to pass coding standards check.
+    // @code $primary_options = $secondary_options = $this->getOptions($items->getEntity());
+    $secondary_options = $this->getOptions($items->getEntity());
 
     $element['primary']['#description'] = $this->t('The primary event channel this appears in. Path, breadcrumb, will be set for this channel');
     $element['secondary']['#description'] = $this->t('Other event channels this will appear in.');
@@ -39,6 +43,5 @@ class ChannelFieldWidget extends DirectoryChannelFieldWidget {
 
     return $element;
   }
-
 
 }

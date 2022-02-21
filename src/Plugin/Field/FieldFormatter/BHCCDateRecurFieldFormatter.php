@@ -6,7 +6,6 @@ use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
-use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\date_recur\Plugin\Field\FieldFormatter\DateRecurBasicFormatter;
 
@@ -76,10 +75,12 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
   }
 
   /**
-   * View next Date
-   * @param  FieldItemInterface $item
+   * View next Date.
+   *
+   * @param \Drupal\Core\Field\FieldItemInterface $item
    *   Individual field item.
-   * @return Array
+   *
+   * @return array
    *   Build array with next date.
    */
   protected function viewNextDate(FieldItemInterface $item) {
@@ -118,7 +119,6 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
 
     return $build;
   }
-
 
   /**
    * Generate the output appropriate for one field item.

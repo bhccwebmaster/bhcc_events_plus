@@ -7,7 +7,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Field\Plugin\Field\FieldWidget\OptionsWidgetBase;
 use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacetsType;
 use Drupal\node\Entity\Node;
-use Drupal\localgov_directories\Plugin\Field\FieldWidget\FacetFieldWidget as DirectoryFacetFieldWidget;
 
 /**
  * Display available facet options by selected channel.
