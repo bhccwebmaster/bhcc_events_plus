@@ -28,6 +28,13 @@ class FacetFilter extends InOperator {
   protected $entityTypeManager;
 
   /**
+   * Filter identifier.
+   * 
+   * @var String.
+   */
+  protected $identifier;
+
+  /**
    * FacetFilter constructor.
    *
    * @param array $configuration
@@ -64,7 +71,10 @@ class FacetFilter extends InOperator {
 
     // Modifiy the filter if exposed input.
     if (!empty($options['expose'])) {
+
+      // Fetch the filter identifier and store globally.
       $identifier = $options['expose']['identifier'];
+      $this->identifier = $identifier;
 
       $exposed_input = $view->getExposedInput();
 
@@ -103,9 +113,14 @@ class FacetFilter extends InOperator {
 
   /**
    * Get facets types that are avalible.
+   * 
+   * Static as need to access it in callback.
+   * 
+   * @return array
+   *   Array of facets, in form 'key' => 'label'
    */
-  protected function getFacetTypes() {
-    $facet_types = $this->entityTypeManager
+  public static function getFacetTypes() {
+    $facet_types = \Drupal::entityTypeManager()
       ->getStorage('localgov_directories_facets_type')
       ->getQuery('AND')
       ->execute();
@@ -154,6 +169,8 @@ class FacetFilter extends InOperator {
       '#attributes' => [
         'class' => ['facet-filter'],
       ],
+      // Pass through the idenitifier.
+      '#identifier' => $this->identifier,
     ];
     $types = $this->getFacetTypes();
     foreach ($types as $id => $type) {
@@ -166,8 +183,39 @@ class FacetFilter extends InOperator {
       }
     }
 
+    // Set the element itself to a value element so it does not render.
     $form['value']['#type'] = 'value';
+    $form['value']['#value'] = [];
     unset($form['value']['#options']);
+
+    // Add a custom submit handler to set the facet values.
+    $form['#submit'][] = ['Drupal\bhcc_events_plus\Plugin\views\filter\FacetFilter', 'facetSubmitHandler'];
+  }
+
+  /**
+   * Facet Submit Handler
+   * 
+   * Combine the exposed facet values into a single value array for the filter.
+   * (Like massageFormValues).
+   * 
+   * @param array $form 
+   *   Form array.
+   * @param Drupal\Core\Form\FormStateInterface $form_state
+   *   Form state object.
+   */
+  public static function facetSubmitHandler(array $form, FormStateInterface $form_state) {
+    $types = self::getFacetTypes();
+    $options = [];
+    foreach ($types as $id => $type) {
+      $facet_values = $form_state->getValue('facet_' . $id);
+      if (is_array($facet_values)) {
+        $options = array_merge($options, $facet_values);
+      }
+    }
+
+    // Retrive the identifier.
+    $identifier = $form['bhcc_facets']['#identifier'];
+    $form_state->setValue($identifier, $options);
   }
 
   /**
