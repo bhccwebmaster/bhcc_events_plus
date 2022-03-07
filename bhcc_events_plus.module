@@ -218,6 +218,52 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
           // Check if is in facet array.
           return in_array(substr($key, 6), $facet_types) ? TRUE : FALSE;
         }, ARRAY_FILTER_USE_KEY);
+
+        // Filter out facets that have no nodes.
+        foreach($form['bhcc_facets'] as $key => $value) {
+
+          // Skip over special keys.
+          if (substr($key, 0, 1) == '#') {
+            continue;
+          }
+
+          // Perform filter options.
+          if (!empty($value['#options'])) {
+            $form['bhcc_facets'][$key]['#options'] = array_filter($value['#options'], function($facet_id) use ($channel_node) {
+              // do entity query to see if there are any results
+              $query = \Drupal::entityQuery('node');
+              $query->condition('type', 'localgov_event');
+              $query->condition('bhcc_event_channel.entity.nid', $channel_node->id());
+              $query->condition('localgov_directory_facets_select.entity.id', $facet_id);
+
+              // include only those with published moderation state
+              // $query->condition('moderation_state', 'published');
+
+              $results = $query->execute();
+              return !empty($results) ? TRUE : FALSE;
+            }, ARRAY_FILTER_USE_KEY);
+
+            // Additional Filter to remove the option from display.
+            $form['bhcc_facets'][$key] = array_filter($form['bhcc_facets'][$key], function($facet_id) use ($form, $key) {
+              
+              // Only filter the numeric keys that correspond to options.
+              if (!is_numeric($facet_id)) {
+                return TRUE;
+              }
+
+              // Check if it is a valid option.
+              if (isset($form['bhcc_facets'][$key]['#options'][$facet_id])) {
+                return TRUE;
+              }
+              return FALSE;
+            }, ARRAY_FILTER_USE_KEY);
+          }
+
+          // If no options, then remove the facet.
+          if (empty($form['bhcc_facets'][$key]['#options'])) {
+            unset($form['bhcc_facets'][$key]);
+          }
+        }
       }
       else {
         // Remove all facets if none set.
