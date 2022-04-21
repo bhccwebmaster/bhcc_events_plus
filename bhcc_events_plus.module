@@ -237,9 +237,11 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
               $query->condition('type', 'localgov_event');
               $query->condition('bhcc_event_channel.entity.nid', $channel_node->id());
               $query->condition('localgov_directory_facets_select.entity.id', $facet_id);
+              $query->accessCheck(TRUE);
 
               // Include only those with published moderation state
-              // $query->condition('moderation_state', 'published');.
+              $query->condition('moderation_state', 'published');
+              
               $results = $query->execute();
               return !empty($results) ? TRUE : FALSE;
             }, ARRAY_FILTER_USE_KEY);
