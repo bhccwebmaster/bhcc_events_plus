@@ -214,7 +214,7 @@ class FacetFilter extends InOperator {
     }
 
     // Retrive the identifier.
-    $identifier = $form['bhcc_facets']['#identifier'];
+    $identifier = $form['bhcc_facets']['#identifier'] ?? NULL;
     $form_state->setValue($identifier, $options);
   }
 

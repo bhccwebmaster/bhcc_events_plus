@@ -267,17 +267,17 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
       }
       else {
         // Remove all facets if none set.
-        unset($form['bhcc_facets']);
+        _bhcc_events_plus_localgov_events_listing_hide_facets($form);
       }
     }
     else {
       // Remove facets if not a channel node.
-      unset($form['bhcc_facets']);
+      _bhcc_events_plus_localgov_events_listing_hide_facets($form);
     }
   }
   else {
     // Remove facets if no channel node.
-    unset($form['bhcc_facets']);
+    _bhcc_events_plus_localgov_events_listing_hide_facets($form);
   }
 
   // Seperate the filters in own container.
@@ -366,4 +366,22 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
   }
 
   return $form;
+}
+
+/**
+ * Hide the facets filter
+ * 
+ * As we can't fully remove the facet filters, at least hide it so the block
+ * does not appear when not needed.
+ * 
+ * @param array $form
+ *   Form array.
+ */
+function _bhcc_events_plus_localgov_events_listing_hide_facets(&$form) {
+  // Remove facets if no channel node.
+  $form['bhcc_facets'] = array_filter($form['bhcc_facets'], function($key) {
+    return (strpos($key, 'facet_') !== 0 ? TRUE : FALSE);
+  }, ARRAY_FILTER_USE_KEY);
+  unset($form['bhcc_facets']['#theme']);
+  $form['bhcc_facets']['#type'] = 'hidden';
 }
