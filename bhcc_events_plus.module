@@ -220,7 +220,7 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
         }, ARRAY_FILTER_USE_KEY);
 
         // Filter out facets that have no nodes.
-        foreach($form['bhcc_facets'] as $key => $value) {
+        foreach ($form['bhcc_facets'] as $key => $value) {
 
           // Skip over special keys.
           if (substr($key, 0, 1) == '#') {
@@ -229,23 +229,22 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
 
           // Perform filter options.
           if (!empty($value['#options'])) {
-            $form['bhcc_facets'][$key]['#options'] = array_filter($value['#options'], function($facet_id) use ($channel_node) {
-              // do entity query to see if there are any results
+            $form['bhcc_facets'][$key]['#options'] = array_filter($value['#options'], function ($facet_id) use ($channel_node) {
+              // Do entity query to see if there are any results.
               $query = \Drupal::entityQuery('node');
               $query->condition('type', 'localgov_event');
               $query->condition('bhcc_event_channel.entity.nid', $channel_node->id());
               $query->condition('localgov_directory_facets_select.entity.id', $facet_id);
 
-              // include only those with published moderation state
-              // $query->condition('moderation_state', 'published');
-
+              // Include only those with published moderation state
+              // $query->condition('moderation_state', 'published');.
               $results = $query->execute();
               return !empty($results) ? TRUE : FALSE;
             }, ARRAY_FILTER_USE_KEY);
 
             // Additional Filter to remove the option from display.
-            $form['bhcc_facets'][$key] = array_filter($form['bhcc_facets'][$key], function($facet_id) use ($form, $key) {
-              
+            $form['bhcc_facets'][$key] = array_filter($form['bhcc_facets'][$key], function ($facet_id) use ($form, $key) {
+
               // Only filter the numeric keys that correspond to options.
               if (!is_numeric($facet_id)) {
                 return TRUE;
@@ -369,17 +368,17 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
 }
 
 /**
- * Hide the facets filter
- * 
+ * Hide the facets filter.
+ *
  * As we can't fully remove the facet filters, at least hide it so the block
  * does not appear when not needed.
- * 
+ *
  * @param array $form
  *   Form array.
  */
-function _bhcc_events_plus_localgov_events_listing_hide_facets(&$form) {
+function _bhcc_events_plus_localgov_events_listing_hide_facets(array &$form) {
   // Remove facets if no channel node.
-  $form['bhcc_facets'] = array_filter($form['bhcc_facets'], function($key) {
+  $form['bhcc_facets'] = array_filter($form['bhcc_facets'], function ($key) {
     return (strpos($key, 'facet_') !== 0 ? TRUE : FALSE);
   }, ARRAY_FILTER_USE_KEY);
   unset($form['bhcc_facets']['#theme']);

@@ -29,8 +29,8 @@ class FacetFilter extends InOperator {
 
   /**
    * Filter identifier.
-   * 
-   * @var String.
+   *
+   * @var string
    */
   protected $identifier;
 
@@ -113,9 +113,9 @@ class FacetFilter extends InOperator {
 
   /**
    * Get facets types that are avalible.
-   * 
+   *
    * Static as need to access it in callback.
-   * 
+   *
    * @return array
    *   Array of facets, in form 'key' => 'label'
    */
@@ -189,16 +189,19 @@ class FacetFilter extends InOperator {
     unset($form['value']['#options']);
 
     // Add a custom submit handler to set the facet values.
-    $form['#submit'][] = ['Drupal\bhcc_events_plus\Plugin\views\filter\FacetFilter', 'facetSubmitHandler'];
+    $form['#submit'][] = [
+      'Drupal\bhcc_events_plus\Plugin\views\filter\FacetFilter',
+      'facetSubmitHandler',
+    ];
   }
 
   /**
-   * Facet Submit Handler
-   * 
+   * Facet Submit Handler.
+   *
    * Combine the exposed facet values into a single value array for the filter.
    * (Like massageFormValues).
-   * 
-   * @param array $form 
+   *
+   * @param array $form
    *   Form array.
    * @param Drupal\Core\Form\FormStateInterface $form_state
    *   Form state object.
