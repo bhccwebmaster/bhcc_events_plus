@@ -267,6 +267,17 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
             unset($form['bhcc_facets'][$key]);
           }
         }
+
+        // If all facets have been removed, hide the facets.
+        $facet_keys = array_filter($form['bhcc_facets'], function ($key) {
+          // Don't filter special keys.
+          if (substr($key, 0, 6) == 'facet_') {
+            return TRUE;
+          }
+        }, ARRAY_FILTER_USE_KEY);
+        if (count($facet_keys) == 0) {
+          _bhcc_events_plus_localgov_events_listing_hide_facets($form);
+        }
       }
       else {
         // Remove all facets if none set.
