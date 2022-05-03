@@ -289,7 +289,7 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
     '#weight' => 0,
     // @todo change to theme so can be controlled with cusotm twig.
     '#attributes' => [
-      'class' => ['card', 'default-shadow', 'collapse-margins'],
+      'class' => ['margin-bottom-large', 'padding-medium', 'background-negative', 'default-shadow', 'collapse-margins'],
     ],
   ];
 
