@@ -82,6 +82,17 @@ function bhcc_events_plus_pathauto_pattern_alter(PathautoPattern $pattern, array
         $pattern->setPattern('[node:bhcc_event_channel:0:entity:url:relative]/[node:title]');
       }
     }
+
+    if ($entity->bundle() === 'event_channel' && $entity->hasField('localgov_services_parent') && strpos($pattern->getPattern(), '[node:localgov_services_parent:entity:url:relative]') === FALSE) {
+      // Since the main event pattern adds /events to the begining, 
+      // if that is still set it should be stripped out before adding to the
+      // services hireacy.
+      $root_pattern = $pattern->getPattern();
+      if (substr($root_pattern, 0, 7) === 'events/') {
+        $root_pattern = substr($root_pattern, 7);
+      }
+      $pattern->setPattern('[node:localgov_services_parent:entity:url:relative]/' . $root_pattern);
+    }
   }
 }
 
