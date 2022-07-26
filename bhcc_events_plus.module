@@ -347,6 +347,7 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
   // If proximity filter exists.
   if (!empty($form['bhcc_exposed_filters']['proximity_wrapper']['proximity'])) {
 
+
     $form['bhcc_exposed_filters']['proximity'] = $form['bhcc_exposed_filters']['proximity_wrapper']['proximity'];
     $title = $form['bhcc_exposed_filters']['proximity_wrapper']['#title'];
     unset($form['bhcc_exposed_filters']['proximity_wrapper']);
@@ -361,6 +362,10 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
     // Remove the description and summary.
     unset($form['bhcc_exposed_filters']['proximity']['source_configuration']['origin_address']['#description']);
     unset($form['bhcc_exposed_filters']['proximity']['exposed_summary']);
+
+    // Remove min and max.
+    unset($form['bhcc_exposed_filters']['proximity']['min']);
+    unset($form['bhcc_exposed_filters']['proximity']['max']);
 
     // Change the field title to the set title in views.
     $form['bhcc_exposed_filters']['proximity']['source_configuration']['origin_address']['#title'] = $title;
