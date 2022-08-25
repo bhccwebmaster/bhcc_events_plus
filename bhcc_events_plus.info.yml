@@ -1,6 +1,6 @@
 name: BHCC Events Plus
 description: Brighton and Hove City Council events extensions.
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^9 || ^10
 type: module
 package: 'BHCC'
 dependencies:
