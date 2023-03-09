@@ -167,7 +167,7 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
           // If the last occurance of the event is in the past,
           // then show the banner.
           if (empty($date_bhcc_helper->getOccurrences(new \DateTime(), NULL, 5))) {
-            $markup = '<p class="bhcc-event-alert status-message status-message--info"';
+            $markup = '<p class="bhcc-event-alert status-message status-message--info">';
             $markup .= $this->t('This event occurred in the past.');
             $markup .= '</p>';
             $build['bhcc_event_past_banner'] = [
