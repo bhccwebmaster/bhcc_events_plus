@@ -609,7 +609,7 @@ display:
           entity_type: node
           entity_field: title
           plugin_id: string
-          operator: contains
+          operator: allwords
           value: ''
           group: 1
           exposed: true
