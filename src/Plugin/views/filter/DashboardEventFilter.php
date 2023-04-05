@@ -4,12 +4,11 @@ namespace Drupal\bhcc_events_plus\Plugin\views\filter;
 
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\node\Entity\Node;
 use Drupal\views\Plugin\views\filter\InOperator;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class DashboardEventFilter extends InOperator.
+ * Class Events dashboard views filter plugin.
  *
  * @package Drupal\bhcc_events_plus\Plugin\views\filter
  *
@@ -18,14 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class DashboardEventFilter extends InOperator implements ContainerFactoryPluginInterface {
 
   /**
-   * The mock entity query.
-   *
-   * @var \Drupal\Core\Entity\Query\QueryInterface
-   */
-  protected $entityQuery;
-
-  /**
-   * CanEditDirectoryFilter constructor.
+   * Events dashboard views filter constructor.
    *
    * @param array $configuration
    *   The configuration to use.
@@ -42,8 +34,6 @@ class DashboardEventFilter extends InOperator implements ContainerFactoryPluginI
   }
 
   /**
-   * Creates new.
-   *
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -60,14 +50,14 @@ class DashboardEventFilter extends InOperator implements ContainerFactoryPluginI
    */
   public function getValueOptions() {
     if (!isset($this->valueOptions)) {
-      $nodes = $this->entityTypeManager
-        ->getStorage('node')
+      $node_storage = $this->entityTypeManager->getStorage('node');
+      $nodes = $node_storage
         ->getQuery('AND')
         ->condition('type', 'event_channel')
         ->execute();
 
       $options = [];
-      foreach (Node::loadMultiple($nodes) as $node) {
+      foreach ($node_storage->loadMultiple($nodes) as $node) {
         $options[$node->id()] = $node->label();
       }
 
