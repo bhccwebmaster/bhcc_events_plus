@@ -6,3 +6,6 @@ package: 'BHCC'
 dependencies:
   - localgov_events:localgov_events
   - localgov_directories:localgov_directories
+  - drupal:node
+  - drupal:views
+  - drupal:content_moderation

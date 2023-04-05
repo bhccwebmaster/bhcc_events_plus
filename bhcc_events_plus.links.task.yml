@@ -1,5 +1,5 @@
 bhcc_events.dashboard:
   title: 'Events'
-  route_name: view.events.events_view
+  route_name: view.bhcc_admin_events.events_view
   parent_id: system.admin_content
   weight: 1

@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @package Drupal\bhcc_events_plus\Plugin\views\filter
  *
- * @viewsFilter("node_dashboard_directory")
+ * @viewsFilter("node_dashboard_event")
  */
 class DashboardEventFilter extends InOperator implements ContainerFactoryPluginInterface {
 
@@ -63,7 +63,7 @@ class DashboardEventFilter extends InOperator implements ContainerFactoryPluginI
       $nodes = $this->entityTypeManager
         ->getStorage('node')
         ->getQuery('AND')
-        ->condition('type', 'directory_listing')
+        ->condition('type', 'event_channel')
         ->execute();
 
       $options = [];
@@ -81,8 +81,8 @@ class DashboardEventFilter extends InOperator implements ContainerFactoryPluginI
    */
   public function query() {
     $this->ensureMyTable();
-    $this->query->addField('bhcc_event_channel', 'field_event_channel_target_id');
-    $this->query->addWhere(0, 'bhcc_event_channel.field_event_channel_target_id', $this->value, 'IN');
+    $this->query->addField('node__bhcc_event_channel', 'bhcc_event_channel_target_id');
+    $this->query->addWhere(0, 'node__bhcc_event_channel.bhcc_event_channel_target_id', $this->value, 'IN');
   }
 
 }

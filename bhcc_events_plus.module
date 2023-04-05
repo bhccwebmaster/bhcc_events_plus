@@ -40,6 +40,14 @@ function bhcc_events_plus_views_data_alter(array &$data) {
       'id' => 'bhcc_localgov_facets',
     ],
   ];
+  $data['node_field_data']['dashboard_events'] = [
+    'title' => t('Events (Dashboard)'),
+    'filter' => [
+      'label' => t('Events (Dashboard)'),
+      'field' => 'bhcc_event_channel',
+      'id' => 'node_dashboard_event',
+    ],
+  ];
 }
 
 /**
