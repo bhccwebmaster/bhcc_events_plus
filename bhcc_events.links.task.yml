@@ -1,4 +1,4 @@
-bhcc_event.dashboard:
+bhcc_events.dashboard:
   title: 'Events'
   route_name: view.events.events_view
   parent_id: system.admin_content

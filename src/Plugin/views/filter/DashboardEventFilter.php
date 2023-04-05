@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\bhcc_events\Plugin\views\filter;
+namespace Drupal\bhcc_events_plus\Plugin\views\filter;
 
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -11,7 +11,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Class DashboardEventFilter extends InOperator.
  *
- * @package Drupal\bhcc_events\Plugin\views\filter
+ * @package Drupal\bhcc_events_plus\Plugin\views\filter
  *
  * @viewsFilter("node_dashboard_directory")
  */
