@@ -61,7 +61,7 @@ function bhcc_events_plus_views_pre_build($view) {
     // Fix error on cost input if all is lowercase.
     // @see https://github.com/bhccwebmaster/bhcclocalgov/issues/1147.
     $exposed_input = $view->getExposedInput();
-    if ($exposed_input['bhcc_cost_value'] == 'all') {
+    if (isset($exposed_input['bhcc_cost_value']) && $exposed_input['bhcc_cost_value'] == 'all') {
       $exposed_input['bhcc_cost_value'] = 'All';
       $view->setExposedInput($exposed_input);
     }
