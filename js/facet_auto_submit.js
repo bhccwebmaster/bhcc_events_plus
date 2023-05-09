@@ -14,7 +14,7 @@
 
   Drupal.behaviors.bhcc_events_plus_facet_auto_submit = {
     attach: function(context, settings) {
-      $('.facet-filter input[type="checkbox"]', context).once('bhccEventsPlusFacetAutoSubmit').each(function() {
+      $(once('bhccEventsPlusFacetAutoSubmit', '.facet-filter input[type="checkbox"]', context)).each(function () {
         facet_auto_submit($(this));
       });
     }
