@@ -1,4 +1,8 @@
-(function($) {
+/**
+ * @file
+ * Facet auto submit
+ */
+(function($, once) {
 
   /**
    * Auto submit form when facet changed
@@ -20,4 +24,4 @@
     }
   }
 
-}) (jQuery);
+})(jQuery, once);
