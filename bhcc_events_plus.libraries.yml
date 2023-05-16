@@ -5,3 +5,4 @@ facet_auto_submit:
   dependencies:
     - core/drupal
     - core/jquery
+    - core/once
