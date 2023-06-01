@@ -406,7 +406,11 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
 
     // Hide the distance filter.
     // Should be ok to unset completley as assumed by view if not present.
+    // We have to still set a default value here though, although it can still
+    // be overridden, it clears a PHP error when attempting to manually set it.
+    // @See https://github.com/bhccwebmaster/bhcclocalgov/issues/1526.
     unset($form['bhcc_exposed_filters']['proximity']['value']);
+    $form_state->setValue(['proximity', 'value'], 1);
 
     // Remove the description and summary.
     unset($form['bhcc_exposed_filters']['proximity']['source_configuration']['origin_address']['#description']);
