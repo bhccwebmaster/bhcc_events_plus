@@ -3,12 +3,12 @@
 namespace Drupal\bhcc_events_plus\Plugin\views\filter;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacets;
 use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacetsType;
 use Drupal\views\Plugin\views\display\DisplayPluginBase;
-use Drupal\views\ViewExecutable;
-use Drupal\Core\Form\FormStateInterface;
 use Drupal\views\Plugin\views\filter\InOperator;
+use Drupal\views\ViewExecutable;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

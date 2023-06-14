@@ -2,8 +2,8 @@
 
 namespace Drupal\bhcc_events_plus\Plugin\Field\FieldFormatter;
 
-use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;

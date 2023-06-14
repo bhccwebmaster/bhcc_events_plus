@@ -3,8 +3,8 @@
 namespace Drupal\bhcc_events_plus\Plugin\Field\FieldWidget;
 
 use Drupal\Core\Field\FieldItemListInterface;
-use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Field\Plugin\Field\FieldWidget\OptionsWidgetBase;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacetsType;
 use Drupal\node\Entity\Node;
 
