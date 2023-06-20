@@ -387,7 +387,8 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
     $filter_key = $form_info['value'];
     if (!empty($form['bhcc_exposed_filters'][$filter_key])) {
       $form['bhcc_exposed_filters'][$filter_key]['#title'] = $form_info['label'];
-      $form['bhcc_exposed_filters'][$filter_key]['#description'] = $form_info['description'];
+      // $form['bhcc_exposed_filters'][$filter_key]
+      // ['#description'] = $form_info['description'];
     }
   }
 
