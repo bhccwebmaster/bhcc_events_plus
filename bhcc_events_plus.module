@@ -381,15 +381,6 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
     }
   }
 
-  // Set the title and description from form info.
-  // This gets removed when in a container.
-  foreach ($form['#info'] as $form_info) {
-    $filter_key = $form_info['value'];
-    if (!empty($form['bhcc_exposed_filters'][$filter_key])) {
-      $form['bhcc_exposed_filters'][$filter_key]['#title'] = $form_info['label'];
-    }
-  }
-
   // Add the autosubmit js.
   $form['#attached']['library'][] = 'bhcc_events_plus/facet_auto_submit';
 
@@ -399,7 +390,6 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
     $form['bhcc_exposed_filters']['proximity'] = $form['bhcc_exposed_filters']['proximity_wrapper']['proximity'];
     $title = $form['bhcc_exposed_filters']['proximity_wrapper']['#title'];
     unset($form['bhcc_exposed_filters']['proximity_wrapper']);
-
     // Set as a container, not a fieldset.
     $form['bhcc_exposed_filters']['proximity']['#type'] = 'container';
 
@@ -410,6 +400,8 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
     // @See https://github.com/bhccwebmaster/bhcclocalgov/issues/1526.
     unset($form['bhcc_exposed_filters']['proximity']['value']);
     $form_state->setValue(['proximity', 'value'], 1);
+
+    unset($form['bhcc_exposed_filters']['proximity']['source_configuration']['origin_address']['#attributes']['aria-describedby']);
 
     // Remove the description and summary.
     unset($form['bhcc_exposed_filters']['proximity']['source_configuration']['origin_address']['#description']);
