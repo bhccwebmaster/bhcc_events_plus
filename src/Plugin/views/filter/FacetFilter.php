@@ -123,6 +123,7 @@ class FacetFilter extends InOperator {
     $facet_types = \Drupal::entityTypeManager()
       ->getStorage('localgov_directories_facets_type')
       ->getQuery('AND')
+      ->accessCheck(TRUE)
       ->execute();
 
     $types = [];
@@ -147,6 +148,7 @@ class FacetFilter extends InOperator {
       ->getStorage('localgov_directories_facets')
       ->getQuery('AND')
       ->condition('bundle', $facet_type)
+      ->accessCheck(TRUE)
       ->execute();
 
     $options = [];

@@ -131,7 +131,9 @@ function bhcc_events_plus_pathauto_pattern_alter(PathautoPattern $pattern, array
 
       // Only set the path if the channel node exists.
       // This is to avoid events using the /[node:title] pattern.
-      $channel_nids = \Drupal::entityTypeManager()->getStorage('node')->getQuery()->condition('nid', $target_id)->execute();
+      $channel_nids = \Drupal::entityTypeManager()->getStorage('node')->getQuery()->condition('nid', $target_id)
+        ->accessCheck(TRUE)
+        ->execute();
       if (!empty($channel_nids)) {
         $pattern->setPattern('[node:bhcc_event_channel:0:entity:url:relative]/[node:title]');
       }
