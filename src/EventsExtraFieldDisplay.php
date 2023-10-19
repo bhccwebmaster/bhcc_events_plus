@@ -181,8 +181,8 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
 
     if ($display->getComponent('bhcc_event_geo_address')) {
       if ($node->hasField('localgov_event_location') && $geo_id = $node->localgov_event_location->target_id) {
-        $geo = $this->entityTypeManager->getStorage('localgov_geo')->load($geo_id);
-        $view = $this->entityTypeManager->getViewBuilder('localgov_geo')->view($geo, 'display_address');
+        $geo = $this->entityTypeManager->getStorage('geo_entity')->load($geo_id);
+        $view = $this->entityTypeManager->getViewBuilder('geo_entity')->view($geo, 'display_address');
         $build['bhcc_event_geo_address'] = $view;
       }
     }
