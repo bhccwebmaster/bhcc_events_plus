@@ -123,7 +123,7 @@ function bhcc_events_plus_pathauto_pattern_alter(PathautoPattern $pattern, array
   if ($entity instanceof NodeInterface) {
 
     // Due to events not always having a channel,
-    // add the pattern for indivudual events here to be aliased with
+    // add the pattern for individual events here to be aliased with
     // their parent event channel.
     // Based on Localgov Services Navigation path alter.
     // @see LocalgovDrupal services navigation module.
@@ -140,9 +140,9 @@ function bhcc_events_plus_pathauto_pattern_alter(PathautoPattern $pattern, array
     }
 
     if ($entity->bundle() === 'event_channel' && $entity->hasField('localgov_services_parent') && strpos($pattern->getPattern(), '[node:localgov_services_parent:entity:url:relative]') === FALSE) {
-      // Since the main event pattern adds /events to the begining,
+      // Since the main event pattern adds /events to the beginning,
       // if that is still set it should be stripped out before adding to the
-      // services hireacy.
+      // services hierarchy.
       $root_pattern = $pattern->getPattern();
       if (substr($root_pattern, 0, 7) === 'events/') {
         $root_pattern = substr($root_pattern, 7);
@@ -238,10 +238,12 @@ function bhcc_events_plus_form_views_exposed_form_alter(&$form, FormStateInterfa
  *
  * @return array
  *   Modified form array.
+ *
+ * @throws \Drupal\Core\Entity\EntityMalformedException
  */
 function _bhcc_events_plus_localgov_events_listing_after_build(array $form, FormStateInterface &$form_state) {
 
-  // If this is an events node, and it has a channel,
+  // If this is an 'events' node, and it has a channel,
   // direct the search to search in channel.
   $route_match = \Drupal::routeMatch();
   if ($route_match->getParameters()->has('node') && $node = $route_match->getParameter('node')) {
@@ -268,7 +270,7 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
 
     // Filter facets.
     // Only apply to the channel node.
-    // In future, this will work via search api and facets.
+    // In the future, this will work via search api and facets.
     if ($channel_node instanceof NodeInterface && $channel_node == $node && !empty($form['bhcc_facets'])) {
 
       // Get the facet types that are enabled.
@@ -361,7 +363,7 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
     _bhcc_events_plus_localgov_events_listing_hide_facets($form);
   }
 
-  // Seperate the filters in own container.
+  // Separate the filters in own container.
   $form['bhcc_exposed_filters'] = [
     '#type' => 'container',
     '#weight' => 0,
@@ -383,41 +385,45 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
     }
   }
 
-  // Add the autosubmit js.
+  // Add the auto-submit js.
   $form['#attached']['library'][] = 'bhcc_events_plus/facet_auto_submit';
 
   // If proximity filter exists.
-  if (!empty($form['bhcc_exposed_filters']['proximity_wrapper']['proximity'])) {
+  if (!empty($form['bhcc_exposed_filters']['proximity_wrapper']['proximity_wrapper'])) {
 
-    $form['bhcc_exposed_filters']['proximity'] = $form['bhcc_exposed_filters']['proximity_wrapper']['proximity'];
+    // Remove the fieldset.
+    $form['bhcc_exposed_filters']['proximity_wrapper']['proximity'] = $form['bhcc_exposed_filters']['proximity_wrapper']['proximity_wrapper']['proximity'];
+
+    // Remove the fieldset now we're done getting data out of it.
+    unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity_wrapper']);
+
+    // Store the set title, we'll need this in a bit.
     $title = $form['bhcc_exposed_filters']['proximity_wrapper']['#title'];
-    unset($form['bhcc_exposed_filters']['proximity_wrapper']);
-    // Set as a container, not a fieldset.
-    $form['bhcc_exposed_filters']['proximity']['#type'] = 'container';
 
     // Hide the distance filter.
-    // Should be ok to unset completley as assumed by view if not present.
+    // Should be ok to unset completely as assumed by view if not present.
+    unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['value']);
+
     // We have to still set a default value here though, although it can still
     // be overridden, it clears a PHP error when attempting to manually set it.
     // @See https://github.com/bhccwebmaster/bhcclocalgov/issues/1526.
-    unset($form['bhcc_exposed_filters']['proximity']['value']);
     $form_state->setValue(['proximity', 'value'], 1);
 
-    unset($form['bhcc_exposed_filters']['proximity']['source_configuration']['origin_address']['#attributes']['aria-describedby']);
+    unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['source_configuration']['origin_address']['#attributes']['aria-describedby']);
 
     // Remove the description and summary.
-    unset($form['bhcc_exposed_filters']['proximity']['source_configuration']['origin_address']['#description']);
-    unset($form['bhcc_exposed_filters']['proximity']['exposed_summary']);
+    unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['source_configuration']['origin_address']['#description']);
+    unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['exposed_summary']);
 
     // Remove min and max.
-    unset($form['bhcc_exposed_filters']['proximity']['min']);
-    unset($form['bhcc_exposed_filters']['proximity']['max']);
+    unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['min']);
+    unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['max']);
 
     // Change the field title to the set title in views.
-    $form['bhcc_exposed_filters']['proximity']['source_configuration']['origin_address']['#title'] = $title;
+    $form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['source_configuration']['origin_address']['#title'] = $title;
 
     // Set the weights.
-    $form['bhcc_exposed_filters']['proximity']['#weight'] = -40;
+    $form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['#weight'] = -40;
     if (!empty($form['bhcc_exposed_filters']['search'])) {
       $form['bhcc_exposed_filters']['search']['#weight'] = -50;
     }
