@@ -391,36 +391,31 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
   // If proximity filter exists.
   if (!empty($form['bhcc_exposed_filters']['proximity_wrapper']['proximity_wrapper'])) {
 
+    // Store the set title, we'll need this in a bit.
+    $title = $form['bhcc_exposed_filters']['proximity_wrapper']['proximity_wrapper']['#title'];
+
     // Remove the fieldset.
-    $form['bhcc_exposed_filters']['proximity_wrapper']['proximity'] = $form['bhcc_exposed_filters']['proximity_wrapper']['proximity_wrapper']['proximity'];
+    $form['bhcc_exposed_filters']['proximity_wrapper']['proximity'] = $form['bhcc_exposed_filters']['proximity_wrapper']['proximity_wrapper']['proximity']['source_configuration']['origin_address'];
 
     // Remove the fieldset now we're done getting data out of it.
     unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity_wrapper']);
-
-    // Store the set title, we'll need this in a bit.
-    $title = $form['bhcc_exposed_filters']['proximity_wrapper']['#title'];
-
-    // Hide the distance filter.
-    // Should be ok to unset completely as assumed by view if not present.
-    unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['value']);
 
     // We have to still set a default value here though, although it can still
     // be overridden, it clears a PHP error when attempting to manually set it.
     // @See https://github.com/bhccwebmaster/bhcclocalgov/issues/1526.
     $form_state->setValue(['proximity', 'value'], 1);
 
-    unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['source_configuration']['origin_address']['#attributes']['aria-describedby']);
+    unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['#attributes']['aria-describedby']);
 
     // Remove the description and summary.
-    unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['source_configuration']['origin_address']['#description']);
+    unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['#description']);
     unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['exposed_summary']);
 
-    // Remove min and max.
-    unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['min']);
-    unset($form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['max']);
-
     // Change the field title to the set title in views.
-    $form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['source_configuration']['origin_address']['#title'] = $title;
+    $form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['#title'] = $title;
+
+    // Add spacing between search and location fields.
+    $form['bhcc_exposed_filters']['proximity_wrapper']['#attributes']['class'][] = 'margin-top-medium';
 
     // Set the weights.
     $form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['#weight'] = -40;
