@@ -54,6 +54,7 @@ class DashboardEventFilter extends InOperator implements ContainerFactoryPluginI
       $nodes = $node_storage
         ->getQuery('AND')
         ->condition('type', 'event_channel')
+        ->accessCheck(TRUE)
         ->execute();
 
       $options = [];
