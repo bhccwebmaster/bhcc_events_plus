@@ -415,7 +415,7 @@ function _bhcc_events_plus_localgov_events_listing_after_build(array $form, Form
     $form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['#title'] = $title;
 
     // Add spacing between search and location fields.
-    $form['bhcc_exposed_filters']['proximity_wrapper']['#attributes']['class'][] = 'margin-top-medium';
+    $form['bhcc_exposed_filters']['proximity_wrapper']['#attributes']['class'][] = 'mar-t:2';
 
     // Set the weights.
     $form['bhcc_exposed_filters']['proximity_wrapper']['proximity']['#weight'] = -40;
