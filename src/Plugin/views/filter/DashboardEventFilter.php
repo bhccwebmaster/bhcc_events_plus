@@ -17,6 +17,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class DashboardEventFilter extends InOperator implements ContainerFactoryPluginInterface {
 
   /**
+   * Entity Type Manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManager
+   */
+  protected $entityTypeManager;
+
+  /**
    * Events dashboard views filter constructor.
    *
    * @param array $configuration
