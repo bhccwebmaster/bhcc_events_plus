@@ -79,17 +79,18 @@ function bhcc_events_plus_views_pre_render($view) {
 
   // Loop through events listing leaflet map and remove duplicates.
   // This is to prevent recursive rendering.
+  // Uses a unique ID based on the node id and the geo entitiy id.
   // @See https://github.com/bhccwebmaster/bhcclocalgov/issues/411
   if ($view_id == 'localgov_events_listing' && $style == 'leaflet_map') {
-    $nids = [];
+    $rids = [];
     foreach ($rows as $key => $row) {
-      $nid = $row->nid;
+      $rid = $row->nid . '-' . $row->geo_entity_field_data_node__localgov_event_location_id;
 
-      if (in_array($nid, $nids)) {
+      if (in_array($rid, $rids)) {
         unset($rows[$key]);
       }
       else {
-        $nids[] = $nid;
+        $rids[] = $rid;
       }
     }
     $view->result = $rows;
