@@ -119,13 +119,22 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
     ];
     $build['#date'] = $this->buildDateRangeValue($startDate, $endDate, FALSE);
     if ($item->isRecurring() && $this->getSetting('interpreter')) {
-      $build['#interpretation'] = $this->viewRRuleInterpretation($item);
+      $build['#interpretation'] = $this->viewRepeatRuleInterpretation($item);
     }
 
     return $build;
   }
 
-  protected function viewRRuleInterpretation(FieldItemInterface $item) {
+  /**
+   * View the repeat rule.
+   *
+   * @param \Drupal\Core\Field\FieldItemInterface $item
+   *   Individual field item.
+   *
+   * @return string|null
+   *   Rules interpreted into a string.
+   */
+  protected function viewRepeatRuleInterpretation(FieldItemInterface $item) {
 
     /** @var string|null $interpreterId */
     $interpreterId = $this->getSetting('interpreter');
