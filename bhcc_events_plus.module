@@ -23,6 +23,7 @@ function bhcc_events_plus_theme() {
     'date_recur_next_date' => [
       'variables' => [
         'date' => [],
+        'interpretation' => NULL,
       ],
     ],
   ];

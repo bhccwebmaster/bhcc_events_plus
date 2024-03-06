@@ -3,10 +3,12 @@
 namespace Drupal\bhcc_events_plus\Plugin\Field\FieldFormatter;
 
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\date_recur\Entity\DateRecurInterpreterInterface;
 use Drupal\date_recur\Plugin\Field\FieldFormatter\DateRecurBasicFormatter;
 
 /**
@@ -116,8 +118,27 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
       '#theme' => 'date_recur_next_date',
     ];
     $build['#date'] = $this->buildDateRangeValue($startDate, $endDate, FALSE);
+    if ($item->isRecurring() && $this->getSetting('interpreter')) {
+      $build['#interpretation'] = $this->viewRRuleInterpretation($item);
+    }
 
     return $build;
+  }
+
+  protected function viewRRuleInterpretation(FieldItemInterface $item) {
+
+    /** @var string|null $interpreterId */
+    $interpreterId = $this->getSetting('interpreter');
+    if ($interpreterId && ($interpreter = $this->dateRecurInterpreterStorage->load($interpreterId))) {
+      assert($interpreter instanceof DateRecurInterpreterInterface);
+      $rules = $item->getHelper()->getRules();
+      $plugin = $interpreter->getPlugin();
+      $cacheability = new CacheableMetadata();
+      $cacheability->addCacheableDependency($interpreter);
+      return $plugin->interpret($rules, 'en');
+    }
+    return NULL;
+
   }
 
   /**
