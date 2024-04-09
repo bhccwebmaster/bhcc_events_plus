@@ -1,0 +1,3 @@
+services:
+  bhcc_events_plus.date_instances:
+    class: Drupal\bhcc_events_plus\FieldDateInstances
