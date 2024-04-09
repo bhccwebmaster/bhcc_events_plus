@@ -66,8 +66,12 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
     foreach ($items as $delta => $item) {
       // $value = $this->viewItem($item, $occurrenceQuota);
       $value = $this->viewNextDate($item);
+
       $occurrenceQuota -= ($isSharedMaximum ? count($value['#occurrences']) : 0);
       $elements[$delta] = $value;
+
+      $elements[$delta]['#view_mode'] = $this->viewMode;
+
       if ($occurrenceQuota <= 0) {
         break;
       }
@@ -115,7 +119,8 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
 
     // Build field item, use only the single date format.
     $build = [
-      '#theme' => 'date_recur_next_date',
+      '#theme' => 'date_recur_basic_formatter',
+      '#view_mode' => $this->viewMode,
     ];
     $build['#date'] = $this->buildDateRangeValue($startDate, $endDate, FALSE);
     if ($item->isRecurring() && $this->getSetting('interpreter')) {

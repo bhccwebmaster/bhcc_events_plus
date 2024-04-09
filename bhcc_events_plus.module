@@ -26,7 +26,26 @@ function bhcc_events_plus_theme() {
         'interpretation' => NULL,
       ],
     ],
+    'date_recur_basic_formatter' => [
+      'variables' => [
+        'date' => NULL,
+        'interpretation' => NULL,
+        'is_recurring' => FALSE,
+        'occurrences' => [],
+        'view_mode' => '',
+      ],
+    ],
   ];
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter().
+ */
+function bhcc_events_plus_theme_suggestions_date_recur_basic_formatter_alter(array &$suggestions, array &$variables, $hook) {
+
+  if (!empty($variables['view_mode'])) {
+    $suggestions[] = $hook . '__' . $variables['view_mode'];
+  }
 }
 
 /**
