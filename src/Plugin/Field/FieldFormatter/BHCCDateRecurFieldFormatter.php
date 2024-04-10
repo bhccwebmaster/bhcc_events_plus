@@ -57,25 +57,22 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
    * {@inheritdoc}
    */
   public function viewElements(FieldItemListInterface $items, $langcode): array {
-    // Whether maximum is per field item or in total.
-    $isSharedMaximum = !$this->getSetting('count_per_item');
-    // Maximum amount of occurrences to be displayed.
-    $occurrenceQuota = (int) $this->getSetting('show_next');
 
-    $elements = [];
-    foreach ($items as $delta => $item) {
-      // $value = $this->viewItem($item, $occurrenceQuota);
-      $value = $this->viewNextDate($item);
+    $elements = [
+      '#theme' => 'date_recur_basic_formatter',
+      '#view_mode' => $this->viewMode,
+    ];
 
-      $occurrenceQuota -= ($isSharedMaximum ? count($value['#occurrences']) : 0);
-      $elements[$delta] = $value;
+    $date_instances = \Drupal::service('bhcc_events_plus.date_instances');
 
-      $elements[$delta]['#view_mode'] = $this->viewMode;
+    $dates = $date_instances->getOccurancesFromField($items, 'Today', '+2 Months');
 
-      if ($occurrenceQuota <= 0) {
-        break;
-      }
+    if ($this->viewMode == 'listing') {
+      $elements['#date'] = $date_instances->getNextOccurance($items);
+      return $elements;
     }
+
+    $elements['#occurrences'] = $dates;
 
     return $elements;
   }
@@ -122,7 +119,9 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
       '#theme' => 'date_recur_basic_formatter',
       '#view_mode' => $this->viewMode,
     ];
-    $build['#date'] = $this->buildDateRangeValue($startDate, $endDate, FALSE);
+
+    $build['#date'] = $this->buildDateRangeValue($startDate, DrupalDateTime::createFromDateTime(), FALSE);
+
     if ($item->isRecurring() && $this->getSetting('interpreter')) {
       $build['#interpretation'] = $this->viewRepeatRuleInterpretation($item);
     }
