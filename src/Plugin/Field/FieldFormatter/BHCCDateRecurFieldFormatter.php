@@ -73,6 +73,8 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
     }
 
     $elements['#occurrences'] = $dates;
+    // @todo Work out cache time, possibly 24 hours.
+    $elements['#cache']['max-age'] = 0;
 
     return $elements;
   }
