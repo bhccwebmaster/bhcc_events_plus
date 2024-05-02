@@ -69,6 +69,10 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
 
     if ($this->viewMode == 'listing') {
       $elements['#date'] = $date_instances->getNextOccurance($items);
+
+      // We also need the occurrences to figure out x number of upcoming events.
+      $elements['#occurrences'] = $dates;
+
       return $elements;
     }
 
