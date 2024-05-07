@@ -67,7 +67,7 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
 
     $dates = $date_instances->getOccurancesFromField($items, 'Today', '+2 Months');
 
-    if ($this->viewMode == 'listing') {
+    if ($this->viewMode != 'full') {
       $elements['#date'] = $date_instances->getNextOccurance($items);
 
       // We also need the occurrences to figure out x number of upcoming events.
