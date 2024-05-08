@@ -91,6 +91,8 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
    *
    * @return array
    *   Build array with next date.
+   *
+   * @todo Remove this if it is now unused.
    */
   protected function viewNextDate(FieldItemInterface $item) {
 
@@ -126,7 +128,7 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
       '#view_mode' => $this->viewMode,
     ];
 
-    $build['#date'] = $this->buildDateRangeValue($startDate, DrupalDateTime::createFromDateTime(), FALSE);
+    $build['#date'] = $this->buildDateRangeValue($startDate, $endDate, FALSE);
 
     if ($item->isRecurring() && $this->getSetting('interpreter')) {
       $build['#interpretation'] = $this->viewRepeatRuleInterpretation($item);
