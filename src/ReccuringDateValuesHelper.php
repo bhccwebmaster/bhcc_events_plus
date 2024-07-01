@@ -42,11 +42,15 @@ class ReccuringDateValuesHelper {
   /**
    * Get next occurance.
    *
+   * @param string $start_date
+   *   Start date as supported by \DateTime.
+   *   deafult is 'now'.
+   *
    * @return \Drupal\date_recur\DateRange|null
    *   The date range set of the next occurance, or NULL if none.
    */
-  public function getNextOccurance() : ?DateRange {
-    $next_occurance_set = $this->getOccurancesFromField('now', NULL, 1);
+  public function getNextOccurance(string $start_date = 'now') : ?DateRange {
+    $next_occurance_set = $this->getOccurancesFromField($start_date, NULL, 1);
     $next = reset($next_occurance_set);
     return !empty($next) ? $next : NULL;
   }

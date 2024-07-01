@@ -35,6 +35,10 @@ function bhcc_events_plus_theme() {
         'view_mode' => '',
       ],
     ],
+    'facets_item_list__checkbox__facets_for_reccuring_events' => [
+      'base hook' => 'facets_item_list',
+      'template'  => 'facets-item-list--links--localgov-directories-facets',
+    ],
   ];
 }
 
@@ -196,7 +200,7 @@ function bhcc_events_plus_node_presave(NodeInterface $node) {
  * Implements hook_module_implements_alter().
  */
 function bhcc_events_plus_module_implements_alter(&$implementations, $hook) {
-  if ($hook == 'form_alter' || $hook == 'form_views_exposed_form_alter') {
+  if ($hook == 'form_alter' || $hook == 'form_views_exposed_form_alter' || $hook == 'facets_preprocess_facets_item_list') {
     // Move bhcc events plus to last hook.
     unset($implementations['bhcc_events_plus']);
     $implementations['bhcc_events_plus'] = NULL;
@@ -244,6 +248,17 @@ function bhcc_events_plus_form_views_exposed_form_alter(&$form, FormStateInterfa
   // localgov_events needs to add the date picker.
   if ($form['#id'] == 'views-exposed-form-localgov-events-listing-page-all-events') {
     $form['#after_build'][] = '_bhcc_events_plus_localgov_events_listing_after_build';
+  }
+
+  // Reccuring events after build.
+  if ($form['#id'] == 'views-exposed-form-reccuring-events-search-page-1') {
+
+    // Set up the reccuring form weights.
+    _bhcc_events_plus_reccuring_events_form_set_weight($form, $form_state);
+
+    // Set up the date filer.
+    // Has to be done in form_alter insted of after build.
+    _bhcc_events_plus_reccuring_events_date_widget($form, $form_state);
   }
 }
 
@@ -490,4 +505,101 @@ function _bhcc_events_plus_localgov_events_listing_hide_facets(array &$form) {
   }, ARRAY_FILTER_USE_KEY);
   unset($form['bhcc_facets']['#theme']);
   $form['bhcc_facets']['#type'] = 'hidden';
+}
+
+/**
+ * Set up recurring events exposed form weights.
+ *
+ * @param array $form
+ *   Form array.
+ * @param Drupal\Core\Form\FormStateInterface $form_state
+ *   Forms state.
+ */
+function _bhcc_events_plus_reccuring_events_form_set_weight(array &$form, FormStateInterface &$form_state) {
+  $set_weight = 0;
+  foreach ($form as $key => &$element) {
+    $ignore_keys = ['form_token', 'form_build_id', 'form_id'];
+    if (strpos($key, '#') !== 0 && !in_array($key, $ignore_keys)) {
+      $element['#weight'] = $set_weight;
+      $set_weight++;
+    }
+  }
+}
+
+/**
+ * Set up the search api based event exposed form date widget.
+ *
+ * @param array $form
+ *   Form array.
+ * @param Drupal\Core\Form\FormStateInterface $form_state
+ *   Forms state.
+ *
+ * @see localgov_events.module
+ *   localgov_events_form_views_exposed_form_alter
+ */
+function _bhcc_events_plus_reccuring_events_date_widget(array &$form, FormStateInterface &$form_state) {
+
+  // Date selection options.
+  $date_options = [
+    'choose' => t('Choose date range'),
+    'today' => t('Today'),
+    'tomorrow' => t('Tomorrow'),
+    'this_week' => t('This week'),
+    'this_month' => t('This month'),
+    'next_month' => t('Next month'),
+  ];
+
+  $form['#attached']['library'][] = 'localgov_events/date-picker';
+  $form['date_picker'] = [
+    '#type' => 'fieldset',
+    '#title' => t('Dates'),
+    '#attributes' => ['class' => ['date-picker']],
+    '#weight' => $form['start']['#weight'] ?? 0,
+  ];
+  $form['date_picker']['dates'] = [
+    '#type' => 'select',
+    '#title' => t('Date range'),
+    '#options' => $date_options,
+    '#default_value' => 'choose',
+    '#attributes' => ['class' => ['js-date-picker']],
+    '#weight' => 0,
+  ];
+  $form['date_picker']['start'] = [
+    '#type' => 'date',
+    '#title' => t('Start date'),
+    '#date_date_format' => 'Y-m-d',
+    '#attributes' => [
+      'type' => 'date',
+      'class' => ['js-date-picker-start'],
+    ],
+  ];
+  unset($form['start']);
+  $form['date_picker']['end'] = [
+    '#type' => 'date',
+    '#title' => t('End date'),
+    '#date_date_format' => 'Y-m-d',
+    '#attributes' => [
+      'type' => 'date',
+      'class' => ['js-date-picker-end'],
+    ],
+  ];
+  unset($form['end']);
+}
+
+/**
+ * Implements theme preprocess_facets_item_list().
+ *
+ * @see facets_preprocess_facets_item_list()
+ */
+function _bhcc_events_plus_preprocess_facets_item_list(array &$variables) {
+  // dpm('events facet');
+  // dpm($variables);
+  if (empty($variables['facet'])) {
+    unset($variables);
+  }
+  if (!empty($variables['facet']) && ($variables['facet']->id() === 'facets_for_reccuring_events')) {
+    \Drupal::service('class_resolver')
+      ->getInstanceFromDefinition(EventsExtraFieldDisplay::class)
+      ->preprocessFacetList($variables);
+  }
 }

@@ -65,6 +65,9 @@ class FieldDateInstances {
    *
    * @param \Drupal\date_recur\Plugin\Field\FieldType\DateRecurFieldItemList $field
    *   A date recur field.
+   * @param string $start_date
+   *   Start date as supported by \DateTime.
+   *   deafult is 'now'.
    *
    * @return array
    *   Array containing [
@@ -73,9 +76,9 @@ class FieldDateInstances {
    *   ].
    *   Or an empty array if no next occurance.
    */
-  public function getNextOccurance(DateRecurFieldItemList $field): array {
+  public function getNextOccurance(DateRecurFieldItemList $field, string $start_date = 'now'): array {
     $reccur_helper = new ReccuringDateValuesHelper($field);
-    $next_occurance = $reccur_helper->getNextOccurance();
+    $next_occurance = $reccur_helper->getNextOccurance($start_date);
     $next_date = [];
     if ($next_occurance) {
       $start = $next_occurance->getStart();
