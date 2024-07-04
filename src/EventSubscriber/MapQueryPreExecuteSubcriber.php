@@ -58,6 +58,11 @@ class MapQueryPreExecuteSubcriber implements EventSubscriberInterface {
         // Add the active filters from the search api view display for the list.
         $this->facetManager->alterQuery($query, 'search_api:views_page__reccuring_events_search__page_1');
       }
+      // Channel map.
+      if ($search_id == 'views_attachment:reccuring_events_search__attachment_2') {
+        // Add the active filters from the search api view display for the list.
+        $this->facetManager->alterQuery($query, 'search_api:views_embed__reccuring_events_search__embed_1');
+      }
     }
   }
 

@@ -14,6 +14,7 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Security\TrustedCallbackInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\localgov_directories\Constants as Directory;
+use Drupal\localgov_directories\DirectoryExtraFieldDisplay;
 use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacets;
 use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacetsType;
 use Drupal\node\NodeInterface;
@@ -188,16 +189,21 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
    * Retrieves view, and sets render array.
    */
   protected function getViewEmbed(NodeInterface $node, $search_filter = FALSE) {
-    $view = Views::getView('localgov_events_listing');
+    $view = Views::getView('reccuring_events_search');
     if (!$view || !$view->access('embed_1')) {
       return;
     }
     $render = [
       '#type' => 'view',
-      '#name' => 'localgov_events_listing',
+      '#name' => 'reccuring_events_search',
       '#display_id' => 'embed_1',
       '#arguments' => [$node->id()],
     ];
+    if (!$search_filter) {
+      $render['#post_render'] = [
+        [DirectoryExtraFieldDisplay::class, 'removeExposedFilter'],
+      ];
+    }
 
     return $render;
   }

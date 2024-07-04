@@ -39,6 +39,10 @@ function bhcc_events_plus_theme() {
       'base hook' => 'facets_item_list',
       'template'  => 'facets-item-list--links--localgov-directories-facets',
     ],
+    'facets_item_list__checkbox__reccuring_events_channel_facets' => [
+      'base hook' => 'facets_item_list',
+      'template'  => 'facets-item-list--links--localgov-directories-facets',
+    ],
   ];
 }
 
@@ -80,7 +84,7 @@ function bhcc_events_plus_views_data_alter(array &$data) {
 function bhcc_events_plus_views_pre_build($view) {
 
   $view_id = $view->id();
-  if ($view_id == 'localgov_events_listing') {
+  if ($view_id == 'localgov_events_listing' || $view == 'reccuring_events_search') {
 
     // Fix error on cost input if all is lowercase.
     // @see https://github.com/bhccwebmaster/bhcclocalgov/issues/1147.
@@ -255,6 +259,9 @@ function bhcc_events_plus_form_views_exposed_form_alter(&$form, FormStateInterfa
 
     // Set up the reccuring form weights.
     _bhcc_events_plus_reccuring_events_form_set_weight($form, $form_state);
+
+    // Set the correct action for the exposed form.
+    _bhcc_events_plus_set_exposed_search_action($form, $form_state);
 
     // Set up the date filer.
     // Has to be done in form_alter insted of after build.
@@ -527,6 +534,43 @@ function _bhcc_events_plus_reccuring_events_form_set_weight(array &$form, FormSt
 }
 
 /**
+ * Set exposed form action to the correct event channel or events search view.
+ *
+ * @param array $form
+ *   Form array.
+ * @param Drupal\Core\Form\FormStateInterface $form_state
+ *   Forms state.
+ */
+function _bhcc_events_plus_set_exposed_search_action(array &$form, FormStateInterface &$form_state) {
+
+  // If this is an 'events' node, and it has a channel,
+  // direct the search to search in channel.
+  $route_match = \Drupal::routeMatch();
+  if ($route_match->getParameters()->has('node') && $node = $route_match->getParameter('node')) {
+    if (!$node instanceof NodeInterface) {
+      $node = Node::load((int) $node);
+    }
+
+    // Set a default value of NULL for the channel node.
+    $channel_node = NULL;
+
+    // Channel node.
+    if ($node->bundle() == 'event_channel') {
+      $form['#action'] = $node->toUrl()->toString();
+      $channel_node = $node;
+    }
+
+    // Event node.
+    if ($node->hasField('bhcc_event_channel') && $target_id = $node->bhcc_event_channel->target_id) {
+      $channel_node = Node::load($target_id);
+      if ($channel_node instanceof NodeInterface) {
+        $form['#action'] = $channel_node->toUrl()->toString();
+      }
+    }
+  }
+}
+
+/**
  * Set up the search api based event exposed form date widget.
  *
  * @param array $form
@@ -592,12 +636,10 @@ function _bhcc_events_plus_reccuring_events_date_widget(array &$form, FormStateI
  * @see facets_preprocess_facets_item_list()
  */
 function _bhcc_events_plus_preprocess_facets_item_list(array &$variables) {
-  // dpm('events facet');
-  // dpm($variables);
   if (empty($variables['facet'])) {
     unset($variables);
   }
-  if (!empty($variables['facet']) && ($variables['facet']->id() === 'facets_for_reccuring_events')) {
+  if (!empty($variables['facet']) && ($variables['facet']->id() === 'facets_for_reccuring_events' || $variables['facet']->id() === 'reccuring_events_channel_facets')) {
     \Drupal::service('class_resolver')
       ->getInstanceFromDefinition(EventsExtraFieldDisplay::class)
       ->preprocessFacetList($variables);
