@@ -9,7 +9,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Pass facets through to map like directories.
- * 
+ *
  * @see \Drupal\localgov_directories_location\EventSubscriber\SearchApiSubscriber.
  */
 class MapQueryPreExecuteSubcriber implements EventSubscriberInterface {
