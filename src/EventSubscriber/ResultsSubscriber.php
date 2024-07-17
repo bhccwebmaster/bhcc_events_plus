@@ -49,7 +49,7 @@ final class ResultsSubscriber implements EventSubscriberInterface {
     // @todo replace this with group query.
     $nids = [];
     $filtered_results = [];
-    foreach ($result_items as $result_item) {
+    foreach ($result_items as $key => $result_item) {
 
       // Use the item id and split the property path to get the NID.
       // This should be faster than loading up each result, though might not
@@ -61,7 +61,7 @@ final class ResultsSubscriber implements EventSubscriberInterface {
       [$nid] = Utility::splitPropertyPath($source_id, FALSE);
       if (!in_array($nid, $nids)) {
         $nids[] = $nid;
-        $filtered_results[] = $result_item;
+        $filtered_results[$key] = $result_item;
       }
     }
 
