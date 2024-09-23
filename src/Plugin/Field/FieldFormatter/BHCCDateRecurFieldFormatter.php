@@ -66,7 +66,7 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
     $date_instances = \Drupal::service('bhcc_events_plus.date_instances');
 
     // Set the start date for the calculation.
-    // This has to accound for events in the past or far future.
+    // This has to account for events in the past or far future.
     $start_date = 'today';
     $next = $date_instances->getNextOccurance($items, $start_date);
     $first = $date_instances->getFirstOccurance($items);
