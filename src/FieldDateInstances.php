@@ -61,10 +61,38 @@ class FieldDateInstances {
   }
 
   /**
+   * Get first occurance.
+   *
+   * @param \Drupal\date_recur\Plugin\Field\FieldType\DateRecurFieldItemList $field
+   *   A date recur field items list.
+   *
+   * @return array
+   *   Array containing [
+   *     'start_datetime' => \DateTime,
+   *     'end_datetime' => \DateTime,
+   *   ].
+   *   Or an empty array if no value.
+   */
+  public function getFirstOccurance(DateRecurFieldItemList $field): array {
+    $reccur_helper = new ReccuringDateValuesHelper($field);
+    $first_occurance = $reccur_helper->getFirstOccurance();
+    $first_date = [];
+    if ($first_occurance) {
+      $start = $first_occurance->getStart();
+      $end = $first_occurance->getEnd();
+      $first_date = [
+        'start_datetime' => $start,
+        'end_datetime' => $end,
+      ];
+    }
+    return $first_date;
+  }
+
+  /**
    * Get next occurance.
    *
    * @param \Drupal\date_recur\Plugin\Field\FieldType\DateRecurFieldItemList $field
-   *   A date recur field.
+   *   A date recur field items list.
    * @param string $start_date
    *   Start date as supported by \DateTime.
    *   deafult is 'now'.
@@ -95,7 +123,7 @@ class FieldDateInstances {
    * Has future occurance.
    *
    * @param \Drupal\date_recur\Plugin\Field\FieldType\DateRecurFieldItemList $field
-   *   A date recur field.
+   *   A date recur field items list.
    *
    * @return bool
    *   TRUE if has future occurance.

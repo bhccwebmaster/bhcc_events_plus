@@ -65,18 +65,36 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
 
     $date_instances = \Drupal::service('bhcc_events_plus.date_instances');
 
-    // Set the start date for the calculation, either today or a computed field.
+    // Set the start date for the calculation.
+    // This has to accound for events in the past or far future.
+    $start_date = 'today';
+    $next = $date_instances->getNextOccurance($items, $start_date);
+    $first = $date_instances->getFirstOccurance($items);
+    $has_future_dates = $date_instances->hasFutureOccurances($items);
+
+    // If there are future dates, calculate from the next occurance.
+    if ($has_future_dates && isset($next['start_datetime'])) {
+      $start_date = $next['start_datetime']->format('Y-m-d');
+    }
+
+    // Else if in the past, calculate from the first occurance.
+    elseif (!$has_future_dates && isset($first['start_datetime'])) {
+      $start_date = $first['start_datetime']->format('Y-m-d');
+    }
+
     // If the computed field is present from date_recur_search_api
     // (ends in _occurence), then set that as the start date. This is to
     // allow the correct date to display in search_api based event views.
     $entity = $items->getEntity();
     $field_name = $items->getName();
     $occurance_field_name = $field_name . '_occurrence';
-    $start_date = 'today';
     if ($entity->hasField($occurance_field_name)) {
       $start_date = $entity->get($occurance_field_name)->value ?? $start_date;
     }
 
+    // Get next set of occurnaces.
+    // @todo make this configurable in field UI, might also need to limit total
+    // number of occurances.
     $dates = $date_instances->getOccurancesFromField($items, $start_date, $start_date . ' +2 Months');
 
     if ($this->viewMode != 'full') {
