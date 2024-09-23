@@ -5,9 +5,9 @@
  * Contains bhcc_events_plus module file.
  */
 
-use Drupal\bhcc_events_plus\EventsExtraFieldDisplay;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\bhcc_events_plus\EventsExtraFieldDisplay;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
 use Drupal\pathauto\Entity\PathautoPattern;
