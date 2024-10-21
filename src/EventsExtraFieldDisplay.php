@@ -13,6 +13,7 @@ use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Security\TrustedCallbackInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\geo_entity\GeoEntityInterface;
 use Drupal\localgov_directories\Constants as Directory;
 use Drupal\localgov_directories\DirectoryExtraFieldDisplay;
 use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacets;
@@ -178,8 +179,12 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
         $geo_ids = array_column($localgov_location, 'target_id');
         foreach ($geo_ids as $geo_id) {
           $geo = $this->entityTypeManager->getStorage('geo_entity')->load($geo_id);
-          $view = $this->entityTypeManager->getViewBuilder('geo_entity')->view($geo, 'display_address');
-          $build['bhcc_event_geo_address'][$geo_id] = $view;
+
+          // Check that this is instance of GeoEntityinterface.
+          if ($geo instanceof GeoEntityInterface) {
+            $view = $this->entityTypeManager->getViewBuilder('geo_entity')->view($geo, 'display_address');
+            $build['bhcc_event_geo_address'][$geo_id] = $view;
+          }
         }
       }
     }
