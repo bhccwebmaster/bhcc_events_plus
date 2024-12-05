@@ -49,6 +49,12 @@ final class QueryPreExecuteSubscriber implements EventSubscriberInterface {
         if ($field == 'localgov_event_date_occurrence') {
           $found_start_date_condition = TRUE;
         }
+        // Increase the end date value by 86400.
+        if ($field == 'end_value') {
+          $end_value = $sub_condition->getValue();
+          $end_value += 86400;
+          $sub_condition->setValue($end_value);
+        }
       }
     }
 
