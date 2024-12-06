@@ -38,7 +38,7 @@ final class QueryPreExecuteSubscriber implements EventSubscriberInterface {
       return;
     }
 
-    // Check if a start date is present.
+    // Modify conditions.
     $condition_group = $query->getConditionGroup();
     $conditions = $condition_group->getConditions();
     $found_start_date_condition = FALSE;
@@ -46,10 +46,14 @@ final class QueryPreExecuteSubscriber implements EventSubscriberInterface {
       $sub_conditions = $condition->getConditions();
       foreach ($sub_conditions as $sub_condition) {
         $field = $sub_condition->getField();
+
+        // Check if a start date is present.
         if ($field == 'localgov_event_date_occurrence') {
           $found_start_date_condition = TRUE;
         }
-        // Increase the end date value by 86400.
+
+        // Increase the end date value to end of day.
+        // @See https://brighton-hove-digital.atlassian.net/browse/WEB-282
         if ($field == 'end_value') {
           $end_value = $sub_condition->getValue();
           $end_value += 86400;
