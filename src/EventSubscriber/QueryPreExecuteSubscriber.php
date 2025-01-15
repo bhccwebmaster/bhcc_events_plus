@@ -67,11 +67,12 @@ final class QueryPreExecuteSubscriber implements EventSubscriberInterface {
       $condition_group->addCondition('localgov_event_date_occurrence', strtotime('midnight'), '>=');
     }
 
-    // Remove offset and limit in the query to get all results.
+    // Remove offset in the query to get all results.
+    // Set the limnt to 1000 to avoid timeout errors.
     // This is then filtered in the results subscriber.
     // @todo replace this with 'grouped' query.
     $query->setOption('offset', NULL);
-    $query->setOption('limit', NULL);
+    $query->setOption('limit', 1000);
   }
 
 }
