@@ -66,7 +66,7 @@ class FacetFilter extends InOperator {
   /**
    * {@inheritdoc}
    */
-  public function init(ViewExecutable $view, DisplayPluginBase $display, array &$options = NULL) {
+  public function init(ViewExecutable $view, DisplayPluginBase $display, ?array &$options = NULL) {
     parent::init($view, $display, $options);
 
     // Modifiy the filter if exposed input.
@@ -169,7 +169,10 @@ class FacetFilter extends InOperator {
       '#theme' => 'bhcc_events_facets',
       '#type' => 'container',
       '#attributes' => [
-        'class' => ['facet-filter'],
+        'class' => [
+          'facet-filter',
+          'pad:none',
+        ],
       ],
       // Pass through the idenitifier.
       '#identifier' => $this->identifier,

@@ -3,10 +3,12 @@
 namespace Drupal\bhcc_events_plus\Plugin\Field\FieldFormatter;
 
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\date_recur\Entity\DateRecurInterpreterInterface;
 use Drupal\date_recur\Plugin\Field\FieldFormatter\DateRecurBasicFormatter;
 
 /**
@@ -55,22 +57,58 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
    * {@inheritdoc}
    */
   public function viewElements(FieldItemListInterface $items, $langcode): array {
-    // Whether maximum is per field item or in total.
-    $isSharedMaximum = !$this->getSetting('count_per_item');
-    // Maximum amount of occurrences to be displayed.
-    $occurrenceQuota = (int) $this->getSetting('show_next');
 
-    $elements = [];
-    foreach ($items as $delta => $item) {
-      // $value = $this->viewItem($item, $occurrenceQuota);
-      $value = $this->viewNextDate($item);
-      $occurrenceQuota -= ($isSharedMaximum ? count($value['#occurrences']) : 0);
-      $elements[$delta] = $value;
-      if ($occurrenceQuota <= 0) {
-        break;
-      }
+    $elements = [
+      '#theme' => 'date_recur_basic_formatter',
+      '#view_mode' => $this->viewMode,
+    ];
+
+    $date_instances = \Drupal::service('bhcc_events_plus.date_instances');
+
+    // Set the start date for the calculation.
+    // This has to account for events in the past or far future.
+    $start_date = 'today';
+    $next = $date_instances->getNextOccurance($items, $start_date);
+    $first = $date_instances->getFirstOccurance($items);
+    $has_future_dates = $date_instances->hasFutureOccurances($items);
+
+    // If there are future dates, calculate from the next occurance.
+    if ($has_future_dates && isset($next['start_datetime'])) {
+      $start_date = $next['start_datetime']->format('Y-m-d');
     }
 
+    // Else if in the past, calculate from the first occurance.
+    elseif (!$has_future_dates && isset($first['start_datetime'])) {
+      $start_date = $first['start_datetime']->format('Y-m-d');
+    }
+
+    // If the computed field is present from date_recur_search_api
+    // (ends in _occurence), then set that as the start date. This is to
+    // allow the correct date to display in search_api based event views.
+    $entity = $items->getEntity();
+    $field_name = $items->getName();
+    $occurance_field_name = $field_name . '_occurrence';
+    if ($entity->hasField($occurance_field_name)) {
+      $start_date = $entity->get($occurance_field_name)->value ?? $start_date;
+    }
+
+    // Get next set of occurnaces.
+    // @todo make this configurable in field UI, might also need to limit total
+    // number of occurances.
+    $dates = $date_instances->getOccurancesFromField($items, $start_date, $start_date . ' +2 Months');
+
+    if ($this->viewMode != 'full') {
+      $elements['#date'] = $date_instances->getNextOccurance($items, $start_date);
+
+      // We also need the occurrences to figure out x number of upcoming events.
+      $elements['#occurrences'] = $dates;
+
+      return $elements;
+    }
+
+    $elements['#occurrences'] = $dates;
+    // @todo Work out cache time, possibly 24 hours.
+    $elements['#cache']['max-age'] = 0;
     return $elements;
   }
 
@@ -82,6 +120,8 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
    *
    * @return array
    *   Build array with next date.
+   *
+   * @todo Remove this if it is now unused.
    */
   protected function viewNextDate(FieldItemInterface $item) {
 
@@ -113,11 +153,42 @@ class BHCCDateRecurFieldFormatter extends DateRecurBasicFormatter {
 
     // Build field item, use only the single date format.
     $build = [
-      '#theme' => 'date_recur_next_date',
+      '#theme' => 'date_recur_basic_formatter',
+      '#view_mode' => $this->viewMode,
     ];
+
     $build['#date'] = $this->buildDateRangeValue($startDate, $endDate, FALSE);
 
+    if ($item->isRecurring() && $this->getSetting('interpreter')) {
+      $build['#interpretation'] = $this->viewRepeatRuleInterpretation($item);
+    }
+
     return $build;
+  }
+
+  /**
+   * View the repeat rule.
+   *
+   * @param \Drupal\Core\Field\FieldItemInterface $item
+   *   Individual field item.
+   *
+   * @return string|null
+   *   Rules interpreted into a string.
+   */
+  protected function viewRepeatRuleInterpretation(FieldItemInterface $item) {
+
+    /** @var string|null $interpreterId */
+    $interpreterId = $this->getSetting('interpreter');
+    if ($interpreterId && ($interpreter = $this->dateRecurInterpreterStorage->load($interpreterId))) {
+      assert($interpreter instanceof DateRecurInterpreterInterface);
+      $rules = $item->getHelper()->getRules();
+      $plugin = $interpreter->getPlugin();
+      $cacheability = new CacheableMetadata();
+      $cacheability->addCacheableDependency($interpreter);
+      return $plugin->interpret($rules, 'en');
+    }
+    return NULL;
+
   }
 
   /**

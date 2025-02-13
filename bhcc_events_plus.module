@@ -5,9 +5,9 @@
  * Contains bhcc_events_plus module file.
  */
 
-use Drupal\bhcc_events_plus\EventsExtraFieldDisplay;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\bhcc_events_plus\EventsExtraFieldDisplay;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
 use Drupal\pathauto\Entity\PathautoPattern;
@@ -23,9 +23,37 @@ function bhcc_events_plus_theme() {
     'date_recur_next_date' => [
       'variables' => [
         'date' => [],
+        'interpretation' => NULL,
       ],
     ],
+    'date_recur_basic_formatter' => [
+      'variables' => [
+        'date' => NULL,
+        'interpretation' => NULL,
+        'is_recurring' => FALSE,
+        'occurrences' => [],
+        'view_mode' => '',
+      ],
+    ],
+    'facets_item_list__checkbox__facets_for_reccuring_events' => [
+      'base hook' => 'facets_item_list',
+      'template'  => 'facets-item-list--links--localgov-directories-facets',
+    ],
+    'facets_item_list__checkbox__reccuring_events_channel_facets' => [
+      'base hook' => 'facets_item_list',
+      'template'  => 'facets-item-list--links--localgov-directories-facets',
+    ],
   ];
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter().
+ */
+function bhcc_events_plus_theme_suggestions_date_recur_basic_formatter_alter(array &$suggestions, array &$variables, $hook) {
+
+  if (!empty($variables['view_mode'])) {
+    $suggestions[] = $hook . '__' . $variables['view_mode'];
+  }
 }
 
 /**
@@ -56,7 +84,7 @@ function bhcc_events_plus_views_data_alter(array &$data) {
 function bhcc_events_plus_views_pre_build($view) {
 
   $view_id = $view->id();
-  if ($view_id == 'localgov_events_listing') {
+  if ($view_id == 'localgov_events_listing' || $view == 'reccuring_events_search') {
 
     // Fix error on cost input if all is lowercase.
     // @see https://github.com/bhccwebmaster/bhcclocalgov/issues/1147.
@@ -176,7 +204,7 @@ function bhcc_events_plus_node_presave(NodeInterface $node) {
  * Implements hook_module_implements_alter().
  */
 function bhcc_events_plus_module_implements_alter(&$implementations, $hook) {
-  if ($hook == 'form_alter' || $hook == 'form_views_exposed_form_alter') {
+  if ($hook == 'form_alter' || $hook == 'form_views_exposed_form_alter' || $hook == 'facets_preprocess_facets_item_list') {
     // Move bhcc events plus to last hook.
     unset($implementations['bhcc_events_plus']);
     $implementations['bhcc_events_plus'] = NULL;
@@ -224,6 +252,20 @@ function bhcc_events_plus_form_views_exposed_form_alter(&$form, FormStateInterfa
   // localgov_events needs to add the date picker.
   if ($form['#id'] == 'views-exposed-form-localgov-events-listing-page-all-events') {
     $form['#after_build'][] = '_bhcc_events_plus_localgov_events_listing_after_build';
+  }
+
+  // Reccuring events after build.
+  if ($form['#id'] == 'views-exposed-form-reccuring-events-search-page-1') {
+
+    // Set up the reccuring form weights.
+    _bhcc_events_plus_reccuring_events_form_set_weight($form, $form_state);
+
+    // Set the correct action for the exposed form.
+    _bhcc_events_plus_set_exposed_search_action($form, $form_state);
+
+    // Set up the date filer.
+    // Has to be done in form_alter insted of after build.
+    _bhcc_events_plus_reccuring_events_date_widget($form, $form_state);
   }
 }
 
@@ -470,4 +512,136 @@ function _bhcc_events_plus_localgov_events_listing_hide_facets(array &$form) {
   }, ARRAY_FILTER_USE_KEY);
   unset($form['bhcc_facets']['#theme']);
   $form['bhcc_facets']['#type'] = 'hidden';
+}
+
+/**
+ * Set up recurring events exposed form weights.
+ *
+ * @param array $form
+ *   Form array.
+ * @param Drupal\Core\Form\FormStateInterface $form_state
+ *   Forms state.
+ */
+function _bhcc_events_plus_reccuring_events_form_set_weight(array &$form, FormStateInterface &$form_state) {
+  $set_weight = 0;
+  foreach ($form as $key => &$element) {
+    $ignore_keys = ['form_token', 'form_build_id', 'form_id'];
+    if (strpos($key, '#') !== 0 && !in_array($key, $ignore_keys)) {
+      $element['#weight'] = $set_weight;
+      $set_weight++;
+    }
+  }
+}
+
+/**
+ * Set exposed form action to the correct event channel or events search view.
+ *
+ * @param array $form
+ *   Form array.
+ * @param Drupal\Core\Form\FormStateInterface $form_state
+ *   Forms state.
+ */
+function _bhcc_events_plus_set_exposed_search_action(array &$form, FormStateInterface &$form_state) {
+
+  // If this is an 'events' node, and it has a channel,
+  // direct the search to search in channel.
+  $route_match = \Drupal::routeMatch();
+  if ($route_match->getParameters()->has('node') && $node = $route_match->getParameter('node')) {
+    if (!$node instanceof NodeInterface) {
+      $node = Node::load((int) $node);
+    }
+
+    // Set a default value of NULL for the channel node.
+    $channel_node = NULL;
+
+    // Channel node.
+    if ($node->bundle() == 'event_channel') {
+      $form['#action'] = $node->toUrl()->toString();
+      $channel_node = $node;
+    }
+
+    // Event node.
+    if ($node->hasField('bhcc_event_channel') && $target_id = $node->bhcc_event_channel->target_id) {
+      $channel_node = Node::load($target_id);
+      if ($channel_node instanceof NodeInterface) {
+        $form['#action'] = $channel_node->toUrl()->toString();
+      }
+    }
+  }
+}
+
+/**
+ * Set up the search api based event exposed form date widget.
+ *
+ * @param array $form
+ *   Form array.
+ * @param Drupal\Core\Form\FormStateInterface $form_state
+ *   Forms state.
+ *
+ * @see localgov_events.module
+ *   localgov_events_form_views_exposed_form_alter
+ */
+function _bhcc_events_plus_reccuring_events_date_widget(array &$form, FormStateInterface &$form_state) {
+
+  // Date selection options.
+  $date_options = [
+    'choose' => t('Choose date range'),
+    'today' => t('Today'),
+    'tomorrow' => t('Tomorrow'),
+    'this_week' => t('This week'),
+    'this_month' => t('This month'),
+    'next_month' => t('Next month'),
+  ];
+
+  $form['#attached']['library'][] = 'localgov_events/date-picker';
+  $form['date_picker'] = [
+    '#type' => 'fieldset',
+    '#title' => t('Dates'),
+    '#attributes' => ['class' => ['date-picker']],
+    '#weight' => $form['start']['#weight'] ?? 0,
+  ];
+  $form['date_picker']['dates'] = [
+    '#type' => 'select',
+    '#title' => t('Date range'),
+    '#options' => $date_options,
+    '#default_value' => 'choose',
+    '#attributes' => ['class' => ['js-date-picker']],
+    '#weight' => 0,
+  ];
+  $form['date_picker']['start'] = [
+    '#type' => 'date',
+    '#title' => t('Start date'),
+    '#date_date_format' => 'Y-m-d',
+    '#attributes' => [
+      'type' => 'date',
+      'class' => ['js-date-picker-start'],
+    ],
+  ];
+  unset($form['start']);
+  $form['date_picker']['end'] = [
+    '#type' => 'date',
+    '#title' => t('End date'),
+    '#date_date_format' => 'Y-m-d',
+    '#attributes' => [
+      'type' => 'date',
+      'class' => ['js-date-picker-end'],
+    ],
+  ];
+  unset($form['end']);
+}
+
+/**
+ * Implements theme preprocess_facets_item_list().
+ *
+ * @see facets_preprocess_facets_item_list()
+ */
+function _bhcc_events_plus_preprocess_facets_item_list(array &$variables) {
+  if (empty($variables['facet'])) {
+    unset($variables);
+  }
+  if (!empty($variables['facet']) && ($variables['facet']->id() === 'facets_for_reccuring_events' || $variables['facet']->id() === 'reccuring_events_channel_facets')) {
+    \Drupal::service('class_resolver')
+      ->getInstanceFromDefinition(EventsExtraFieldDisplay::class)
+      ->preprocessFacetList($variables);
+  }
 }

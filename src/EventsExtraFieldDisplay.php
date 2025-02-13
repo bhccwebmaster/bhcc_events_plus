@@ -2,6 +2,7 @@
 
 namespace Drupal\bhcc_events_plus;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Block\BlockManagerInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
@@ -9,8 +10,14 @@ use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBuilderInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Security\TrustedCallbackInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\geo_entity\GeoEntityInterface;
+use Drupal\localgov_directories\Constants as Directory;
+use Drupal\localgov_directories\DirectoryExtraFieldDisplay;
+use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacets;
+use Drupal\localgov_directories\Entity\LocalgovDirectoriesFacetsType;
 use Drupal\node\NodeInterface;
 use Drupal\views\Views;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -58,6 +65,13 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
   protected $formBuilder;
 
   /**
+   * Current route match.
+   *
+   * @var \Drupal\Core\Routing\RouteMatchInterface
+   */
+  protected $routeMatch;
+
+  /**
    * DirectoryExtraFieldDisplay constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -70,13 +84,16 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
    *   Plugin Block Manager.
    * @param \Drupal\Core\Form\FormBuilderInterface $form_builder
    *   Form Builder.
+   * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
+   *   Current route match.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, EntityRepositoryInterface $entity_repository, EntityFieldManagerInterface $entity_field_manager, BlockManagerInterface $plugin_manager_block, FormBuilderInterface $form_builder) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, EntityRepositoryInterface $entity_repository, EntityFieldManagerInterface $entity_field_manager, BlockManagerInterface $plugin_manager_block, FormBuilderInterface $form_builder, RouteMatchInterface $route_match) {
     $this->entityTypeManager = $entity_type_manager;
     $this->entityRepository = $entity_repository;
     $this->entityFieldManager = $entity_field_manager;
     $this->pluginBlockManager = $plugin_manager_block;
     $this->formBuilder = $form_builder;
+    $this->routeMatch = $route_match;
   }
 
   /**
@@ -88,7 +105,8 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
       $container->get('entity.repository'),
       $container->get('entity_field.manager'),
       $container->get('plugin.manager.block'),
-      $container->get('form_builder')
+      $container->get('form_builder'),
+      $container->get('current_route_match')
     );
   }
 
@@ -161,8 +179,12 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
         $geo_ids = array_column($localgov_location, 'target_id');
         foreach ($geo_ids as $geo_id) {
           $geo = $this->entityTypeManager->getStorage('geo_entity')->load($geo_id);
-          $view = $this->entityTypeManager->getViewBuilder('geo_entity')->view($geo, 'display_address');
-          $build['bhcc_event_geo_address'][$geo_id] = $view;
+
+          // Check that this is instance of GeoEntityinterface.
+          if ($geo instanceof GeoEntityInterface) {
+            $view = $this->entityTypeManager->getViewBuilder('geo_entity')->view($geo, 'display_address');
+            $build['bhcc_event_geo_address'][$geo_id] = $view;
+          }
         }
       }
     }
@@ -172,18 +194,107 @@ class EventsExtraFieldDisplay implements ContainerInjectionInterface, TrustedCal
    * Retrieves view, and sets render array.
    */
   protected function getViewEmbed(NodeInterface $node, $search_filter = FALSE) {
-    $view = Views::getView('localgov_events_listing');
+    $view = Views::getView('reccuring_events_search');
     if (!$view || !$view->access('embed_1')) {
       return;
     }
     $render = [
       '#type' => 'view',
-      '#name' => 'localgov_events_listing',
+      '#name' => 'reccuring_events_search',
       '#display_id' => 'embed_1',
       '#arguments' => [$node->id()],
     ];
+    if (!$search_filter) {
+      $render['#post_render'] = [
+        [DirectoryExtraFieldDisplay::class, 'removeExposedFilter'],
+      ];
+    }
 
     return $render;
+  }
+
+  /**
+   * Prepares variables for our bundle grouped facets item list template.
+   *
+   * Facet bundles are sorted based on their weight.
+   *
+   * @see templates/facets-item-list--links--localgov-directories-facets.tpl.php
+   * @see localgov_directories_preprocess_facets_item_list()
+   */
+  public function preprocessFacetList(array &$variables) {
+    $reset_all = NULL;
+    $show_reset_link = [];
+
+    // Check if the show reset link has been enabled.
+    foreach ($variables['items'] as $key => $item) {
+      if ($variables["items"][$key]["value"]["#attributes"]["data-drupal-facet-item-value"] == 'reset_all') {
+        $variables["attributes"]["class"][] = "facet-show-reset";
+        $show_reset_link = current($variables["items"]);
+      }
+    }
+
+    $facet_storage = $this->entityTypeManager
+      ->getStorage(Directory::FACET_CONFIG_ENTITY_ID);
+    $group_items = [];
+    foreach ($variables['items'] as $key => $item) {
+      if ($entity = $facet_storage->load($item['value']['#attributes']['data-drupal-facet-item-value'])) {
+        assert($entity instanceof LocalgovDirectoriesFacets);
+        $group_items[$entity->bundle()]['items'][$key] = $item;
+      }
+    }
+
+    // This is usually on a channel node. If so remove facets not active on
+    // channel.
+    $active_facets = NULL;
+    if (($channel = $this->routeMatch->getParameter('node'))
+      && $channel instanceof NodeInterface
+      && $channel->bundle() == 'event_channel'
+    ) {
+      $active_facets = array_column($channel->localgov_directory_facets_enable->getValue(), 'target_id');
+    }
+    if (!is_null($active_facets)) {
+      $group_items = array_intersect_key($group_items, array_flip($active_facets));
+    }
+
+    $type_storage = $this->entityTypeManager
+      ->getStorage(Directory::FACET_TYPE_CONFIG_ENTITY_ID);
+    foreach ($group_items as $bundle => $items) {
+      $entity = $type_storage->load($bundle);
+      assert($entity instanceof LocalgovDirectoriesFacetsType);
+      $group_items[$bundle]['title'] = Html::escape($this->entityRepository->getTranslationFromContext($entity)->label());
+      $group_items[$bundle]['weight'] = $entity->get('weight');
+    }
+    uasort($group_items, static::compareFacetBundlesByWeight(...));
+    $variables['items'] = $group_items;
+
+    if (!empty($show_reset_link)) {
+      // Add the reset link.
+      $variables['items']['show_reset_all']['items'][] = $show_reset_link;
+      $reset_all = $variables['items']['show_reset_all'];
+      // Place the reset link at the top of the facet filters.
+      array_unshift($variables['items'], $reset_all);
+      array_pop($variables['items']);
+    }
+  }
+
+  /**
+   * Facet bundle comparison callback for sorting.
+   *
+   * Bundles are compared by their weights.  When weights are equal, labels take
+   * over.
+   *
+   * @param array $bundle1
+   *   Necessary keys: weight, title.
+   * @param array $bundle2
+   *   Same as $bundle1.
+   */
+  public static function compareFacetBundlesByWeight(array $bundle1, array $bundle2): int {
+
+    if ($bundle1['weight'] === $bundle2['weight']) {
+      return strnatcasecmp($bundle1['title'], $bundle2['title']);
+    }
+
+    return $bundle1['weight'] < $bundle2['weight'] ? -1 : 1;
   }
 
 }

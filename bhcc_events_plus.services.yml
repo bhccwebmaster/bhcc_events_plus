@@ -1,0 +1,16 @@
+services:
+  bhcc_events_plus.date_instances:
+    class: Drupal\bhcc_events_plus\FieldDateInstances
+  bhcc_events_plus.process_results_subscriber:
+    class: Drupal\bhcc_events_plus\EventSubscriber\ResultsSubscriber
+    tags:
+      - { name: event_subscriber }
+  bhcc_events_plus.alter_query_subscriber:
+    class: Drupal\bhcc_events_plus\EventSubscriber\QueryPreExecuteSubscriber
+    tags:
+      - { name: event_subscriber }
+  bhcc_events_plus.map_facets_subscriber:
+    class: Drupal\bhcc_events_plus\EventSubscriber\MapQueryPreExecuteSubcriber
+    arguments: ['@facets.manager']
+    tags:
+      - { name: event_subscriber }
